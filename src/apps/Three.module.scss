@@ -1,0 +1,58 @@
+.app {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 100%;
+}
+
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.controls {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+
+  padding: 1rem;
+
+  background: rgba(0, 0, 0, 0.1);
+
+  border-radius: 10px;
+
+  .spacer {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .control {
+    width: 4rem;
+    height: 4rem;
+
+    margin: 0.25rem;
+    padding: 0;
+
+    background: rgba(0, 0, 0, 0.1);
+
+    font-size: 2rem;
+    line-height: 4rem;
+    text-align: center;
+
+    border-radius: 10px;
+
+    &.held {
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
+}
