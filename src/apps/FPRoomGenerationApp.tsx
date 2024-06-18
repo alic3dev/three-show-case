@@ -7,6 +7,8 @@ import WebGL from 'three/addons/capabilities/WebGL'
 import Stats from 'three/addons/libs/stats.module'
 import { GUI } from 'three/addons/libs/lil-gui.module.min'
 
+import { LoadingScreen } from '@/components/LoadingScreen'
+
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { generateRoomLayout } from '@/utils/rooms'
 
@@ -23,6 +25,8 @@ interface WindowOrDocumentEvent {
 const ROOM_SIZE: number = 30
 
 export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
+  const [loadState, setLoadState] = React.useState<number>(0)
+
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
@@ -117,15 +121,21 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
         const floorDiffuseTexture = new THREE.TextureLoader().load(
           '/assets/textures/FloorsCheckerboard_S_Diffuse.jpg',
+          (texture: THREE.Texture) => {
+            setLoadState((prevLoadState: number): number => prevLoadState + 1)
+
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+          },
         )
-        floorDiffuseTexture.wrapS = floorDiffuseTexture.wrapT =
-          THREE.RepeatWrapping
 
         const floorNormalTexture = new THREE.TextureLoader().load(
           '/assets/textures/FloorsCheckerboard_S_Diffuse.jpg',
+          (texture: THREE.Texture) => {
+            setLoadState((prevLoadState: number): number => prevLoadState + 1)
+
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+          },
         )
-        floorNormalTexture.wrapS = floorNormalTexture.wrapT =
-          THREE.RepeatWrapping
 
         const textureScale: number = 10
 
@@ -1230,6 +1240,8 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
   return (
     <div className={styles.app}>
       <div ref={rendererContainer} className={styles.container}></div>
+
+      <LoadingScreen delay={0} loading={loadState < 2} />
     </div>
   )
 }

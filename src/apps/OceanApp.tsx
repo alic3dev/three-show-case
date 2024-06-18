@@ -10,6 +10,8 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { Water } from 'three/addons/objects/Water.js'
 import { Sky } from 'three/addons/objects/Sky.js'
 
+import { LoadingScreen } from '@/components/LoadingScreen'
+
 import * as objectUtils from '@/utils/objects'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { Chunk, ChunkManager } from '@/utils/Chunks'
@@ -124,6 +126,8 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
     debugObjects: Record<string, THREE.Object3D>
     stats: Stats
   }>()
+
+  const [loadState, setLoadState] = React.useState<number>(0)
 
   React.useEffect((): (() => void) | void => {
     if (!webGLSupported.current.value || !rendererContainer.current) return
@@ -267,6 +271,8 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
           '/assets/textures/waternormals.jpg',
           function (texture) {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+
+            setLoadState((prevLoadState: number): number => prevLoadState + 1)
           },
         ),
         sunDirection: new THREE.Vector3(0, 1, -20),
@@ -489,6 +495,8 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
   return (
     <div className={styles.app}>
       <div ref={rendererContainer} className={styles.container}></div>
+
+      <LoadingScreen loading={loadState < 1} />
     </div>
   )
 }
