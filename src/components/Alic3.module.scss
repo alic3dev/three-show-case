@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Major+Mono+Display&display=swap');
+
+.title {
+  user-select: none;
+
+  font-size: 20px;
+  font-weight: 700;
+
+  margin: 0;
+  padding: 0;
+
+  font-family: 'Exo 2', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  font-size: 10px;
+  line-height: normal;
+  letter-spacing: 0.5px;
+  text-rendering: optimizeLegibility;
+
+  &,
+  & * {
+    box-sizing: border-box;
+  }
+
+  &.header {
+    position: fixed;
+    top: 5px;
+    left: 30px;
+  }
+}
+
+.title-header {
+  display: flex;
+  align-items: baseline;
+
+  opacity: 0.5;
+
+  transition: opacity 250ms ease-in-out;
+
+  &:active,
+  &:visited,
+  &:link,
+  &:focus,
+  &:hover {
+    text-decoration: none;
+    color: #eaefff;
+  }
+
+  &:hover,
+  &:focus,
+  &:active {
+    opacity: 1;
+
+    // .title-secondary {
+    //   opacity: 1;
+    // }
+  }
+}
+
+.title-main {
+  position: relative;
+  font-size: 3em;
+  font-weight: 300;
+}
+
+.title-secondary {
+  font-size: 3em;
+  font-weight: 100;
+  z-index: 1;
+
+  opacity: 0;
+
+  transition: opacity 250ms ease-in-out;
+}
+
+.title-emphasis {
+  font-weight: 300;
+}
+
+.title-seperator {
+  font-size: 2em;
+}
+
+.title-sub {
+  vertical-align: sub;
+  font-size: 0.75em;
+}
+
+.title-main-part {
+  position: absolute;
+  left: 0px;
+  bottom: 7.5px;
+}
+
+.title-main-start {
+  font-size: 1.5em;
+  font-weight: 100;
+
+  font-family: 'Inconsolata', monospace;
+}
+
+.title-main-middle {
+  font-size: 0.875em;
+  font-weight: 100;
+}
+
+.title-main-c {
+  bottom: 4px;
+}
+
+.title-main-end {
+  font-size: 0.6875em;
+  font-weight: 100;
+  left: 3px;
+  bottom: 8px;
+}
