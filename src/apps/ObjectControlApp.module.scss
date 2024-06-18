@@ -7,6 +7,10 @@
   justify-content: center;
 
   min-height: 100%;
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .container {
@@ -53,6 +57,10 @@
 
     &.held {
       background: rgba(0, 0, 0, 0.2);
+
+      border: none;
+
+      outline: 1px solid #2334ea;
     }
   }
 }
