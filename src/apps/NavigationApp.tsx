@@ -6,11 +6,15 @@ import { SiThreedotjs } from 'react-icons/si'
 
 import { apps } from '@/apps'
 
+import { Alic3 } from '@/components/Alic3'
+
 import styles from '@/apps/NavigationApp.module.scss'
 
 export function NavigationApp(): React.ReactElement {
   return (
     <div className={styles.app}>
+      <Alic3 header />
+
       <h1 className={styles.title}>Examples</h1>
       <h3 className={styles['sub-title']}>
         made with <a href="https://threejs.org/">Three.JS</a>{' '}
