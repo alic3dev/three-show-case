@@ -17,7 +17,7 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
   const settings = React.useRef<{
     speed: { cube: number; camera: number }
   }>({
-    speed: { cube: 0.1, camera: 0.01 },
+    speed: { cube: 0.2, camera: 0.01 },
   })
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
 
@@ -259,21 +259,41 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
       rendererProperties.current!.camera.position.y = posYVal + 4
       rendererProperties.current!.camera.lookAt(0, 3, 0)
 
-      if (heldKeysRef.current.value.ArrowUp) {
-        rendererProperties.current!.objects.cube.position.z -=
-          settings.current.speed.cube
+      if (
+        heldKeysRef.current.value.ArrowUp ||
+        heldKeysRef.current.value.w ||
+        heldKeysRef.current.value[`customKey:up`]
+      ) {
+        rendererProperties.current!.objects.cube.translateZ(
+          -settings.current.speed.cube,
+        )
       }
-      if (heldKeysRef.current.value.ArrowDown) {
-        rendererProperties.current!.objects.cube.position.z +=
-          settings.current.speed.cube
+      if (
+        heldKeysRef.current.value.ArrowDown ||
+        heldKeysRef.current.value.s ||
+        heldKeysRef.current.value[`customKey:down`]
+      ) {
+        rendererProperties.current!.objects.cube.translateZ(
+          settings.current.speed.cube,
+        )
       }
-      if (heldKeysRef.current.value.ArrowRight) {
-        rendererProperties.current!.objects.cube.position.x +=
-          settings.current.speed.cube
+      if (
+        heldKeysRef.current.value.ArrowLeft ||
+        heldKeysRef.current.value.a ||
+        heldKeysRef.current.value[`customKey:left`]
+      ) {
+        rendererProperties.current!.objects.cube.translateX(
+          -settings.current.speed.cube,
+        )
       }
-      if (heldKeysRef.current.value.ArrowLeft) {
-        rendererProperties.current!.objects.cube.position.x -=
-          settings.current.speed.cube
+      if (
+        heldKeysRef.current.value.ArrowRight ||
+        heldKeysRef.current.value.d ||
+        heldKeysRef.current.value[`customKey:right`]
+      ) {
+        rendererProperties.current!.objects.cube.translateX(
+          settings.current.speed.cube,
+        )
       }
 
       renderer.current!.render(
@@ -300,16 +320,11 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
   React.useEffect((): (() => void) | void => {
     const onKeyup: (ev: KeyboardEvent) => void = (ev: KeyboardEvent): void => {
       setHeldKeys(
-        (prevHeldKeys: Record<string, number>): Record<string, number> => {
-          const newHeldKeys = {
-            ...prevHeldKeys,
-          }
-
-          delete newHeldKeys[ev.key]
-          delete newHeldKeys[ev.code]
-
-          return newHeldKeys
-        },
+        (prevHeldKeys: Record<string, number>): Record<string, number> => ({
+          ...prevHeldKeys,
+          [ev.key]: 0,
+          [ev.code]: 0,
+        }),
       )
     }
     window.addEventListener('keyup', onKeyup)
@@ -365,36 +380,88 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
     }
   }, [heldKeys])
 
+  const onMouseDownMovement =
+    (direction: 'up' | 'down' | 'left' | 'right'): (() => void) =>
+    (): void => {
+      setHeldKeys(
+        (prevHeldKeys: Record<string, number>): Record<string, number> => ({
+          ...prevHeldKeys,
+          [`customKey:${direction}`]: performance.now(),
+        }),
+      )
+    }
+
+  const onMouseUpMovement =
+    (direction: 'up' | 'down' | 'left' | 'right'): (() => void) =>
+    (): void => {
+      setHeldKeys(
+        (prevHeldKeys: Record<string, number>): Record<string, number> => ({
+          ...prevHeldKeys,
+          [`customKey:${direction}`]: 0,
+        }),
+      )
+    }
+
   return (
     <div className={styles.app}>
       <div ref={rendererContainer} className={styles.container}></div>
 
       <div className={styles.controls}>
         <div className={styles.spacer} />
-        <div
-          className={`${styles.control} ${heldKeys.ArrowUp ? styles.held : ''}`}
-        >
-          △
-        </div>
-        <div className={styles.spacer} />
-        <div
-          className={`${styles.control} ${
-            heldKeys.ArrowLeft ? styles.held : ''
-          }`}
-        >
-          ◁
-        </div>
-        <div
-          className={`${styles.control} ${
-            heldKeys.ArrowDown ? styles.held : ''
-          }`}
-        >
-          ▽
-        </div>
         <button
           className={`${styles.control} ${
-            heldKeys.ArrowRight ? styles.held : ''
+            heldKeys.ArrowUp || heldKeys.w || heldKeys['customKey:up']
+              ? styles.held
+              : ''
           }`}
+          onTouchStart={onMouseDownMovement('up')}
+          onTouchEnd={onMouseUpMovement('up')}
+          onMouseDown={onMouseDownMovement('up')}
+          onMouseUp={onMouseUpMovement('up')}
+          onMouseLeave={onMouseUpMovement('up')}
+        >
+          △
+        </button>
+        <div className={styles.spacer} />
+        <button
+          className={`${styles.control} ${
+            heldKeys.ArrowLeft || heldKeys.a || heldKeys['customKey:left']
+              ? styles.held
+              : ''
+          }`}
+          onTouchStart={onMouseDownMovement('left')}
+          onTouchEnd={onMouseUpMovement('left')}
+          onMouseDown={onMouseDownMovement('left')}
+          onMouseUp={onMouseUpMovement('left')}
+          onMouseLeave={onMouseUpMovement('left')}
+        >
+          ◁
+        </button>
+        <button
+          className={`${styles.control} ${
+            heldKeys.ArrowDown || heldKeys.s || heldKeys['customKey:down']
+              ? styles.held
+              : ''
+          }`}
+          onTouchStart={onMouseDownMovement('down')}
+          onTouchEnd={onMouseUpMovement('down')}
+          onMouseDown={onMouseDownMovement('down')}
+          onMouseUp={onMouseUpMovement('down')}
+          onMouseLeave={onMouseUpMovement('down')}
+        >
+          ▽
+        </button>
+        <button
+          className={`${styles.control} ${
+            heldKeys.ArrowRight || heldKeys.d || heldKeys['customKey:right']
+              ? styles.held
+              : ''
+          }`}
+          onTouchStart={onMouseDownMovement('right')}
+          onTouchEnd={onMouseUpMovement('right')}
+          onMouseDown={onMouseDownMovement('right')}
+          onMouseUp={onMouseUpMovement('right')}
+          onMouseLeave={onMouseUpMovement('right')}
         >
           ▷
         </button>
