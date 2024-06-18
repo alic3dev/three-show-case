@@ -8,11 +8,11 @@ import Stats from 'three/addons/libs/stats.module.js'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/First.module.scss'
+import styles from '@/apps/BasicCube.module.scss'
 
 export const displayName: string = 'Basic Cube'
 
-export const First: AppComponent = (): React.ReactElement => {
+export const BasicCube: AppComponent = (): React.ReactElement => {
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })

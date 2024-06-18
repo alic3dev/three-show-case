@@ -6,22 +6,44 @@ import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
 import Stats from 'three/addons/libs/stats.module.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/Four.module.scss'
+import styles from '@/apps/ObjectControlApp.module.scss'
 
-export const displayName: string = 'Draggable Camera'
+export const displayName: string = 'Controlling an Object'
 
-export const Four: AppComponent = (): React.ReactElement => {
+export const ObjectControlApp: AppComponent = (): React.ReactElement => {
   const settings = React.useRef<{
-    speed: { cube: number; pointLights: number }
+    speed: { cube: number; camera: number }
   }>({
-    speed: { cube: 0.01, pointLights: 0.01 },
+    speed: { cube: 0.1, camera: 0.01 },
   })
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+
+  const [heldKeys, _setHeldKeys] = React.useState<Record<string, number>>({})
+  const heldKeysRef = React.useRef<{ value: Record<string, number> }>({
+    value: {},
+  })
+  const setHeldKeys = (
+    action:
+      | Record<string, number>
+      | ((prevHeldKeys: Record<string, number>) => Record<string, number>),
+  ) => {
+    if (typeof action === 'function') {
+      _setHeldKeys(
+        (prevHeldKeys: Record<string, number>): Record<string, number> => {
+          const newHeldKeys: Record<string, number> = action(prevHeldKeys)
+
+          heldKeysRef.current.value = newHeldKeys
+
+          return newHeldKeys
+        },
+      )
+    } else {
+      _setHeldKeys(action)
+    }
+  }
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -65,11 +87,24 @@ export const Four: AppComponent = (): React.ReactElement => {
     }
 
     if (!rendererProperties.current) {
-      const matFloor = new THREE.MeshPhongMaterial({ color: 0x808080 })
-      const geoFloor = new THREE.PlaneGeometry(100, 100)
-      const mshFloor = new THREE.Mesh(geoFloor, matFloor)
+      const scene: THREE.Scene = new THREE.Scene()
+      const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
+        90,
+        rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight,
+        0.1,
+        1000,
+      )
+      camera.position.set(0, 3, 10)
+      camera.lookAt(0, 3, 0)
+
+      const matFloor: THREE.MeshPhongMaterial = new THREE.MeshPhongMaterial({
+        color: 0x808080,
+      })
+      const geoFloor: THREE.PlaneGeometry = new THREE.PlaneGeometry(100, 100)
+      const mshFloor: THREE.Mesh = new THREE.Mesh(geoFloor, matFloor)
       mshFloor.rotation.x = -Math.PI * 0.5
-      mshFloor.position.set(0, -0.05, 0)
+      mshFloor.position.set(0, 0, 0)
 
       const cubeGeometry: THREE.BoxGeometry = new THREE.BoxGeometry(1, 1, 1)
       const cubeMaterial: THREE.MeshPhongMaterial = new THREE.MeshPhongMaterial(
@@ -77,8 +112,9 @@ export const Four: AppComponent = (): React.ReactElement => {
           color: 0x808080,
         },
       )
+
       const cube: THREE.Mesh = new THREE.Mesh(cubeGeometry, cubeMaterial)
-      cube.position.set(0, 3, 0)
+      cube.position.set(-3, 0.5, -3)
 
       const xMaterial: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({
         color: 0xff0000,
@@ -114,84 +150,41 @@ export const Four: AppComponent = (): React.ReactElement => {
       const yLine: THREE.Line = new THREE.Line(yGeometry, yMaterial)
       const zLine: THREE.Line = new THREE.Line(zGeometry, zMaterial)
 
-      const grid = new THREE.GridHelper(100, 100, 0x666666, 0x333333)
-
-      const ambientLight = new THREE.AmbientLight(0x444444)
-
-      const pointLightOne = new THREE.PointLight(0x00ff00, 10)
-      pointLightOne.add(
-        new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 16, 16),
-          new THREE.MeshBasicMaterial({ color: 0x00ff00 }),
-        ),
+      const grid: THREE.GridHelper = new THREE.GridHelper(
+        100,
+        100,
+        0x666666,
+        0x333333,
       )
-      pointLightOne.position.set(0, 5, 0)
+      grid.position.y = 0.01
 
-      const pointLightTwo = new THREE.PointLight(0x0000ff, 10)
-      pointLightTwo.add(
-        new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 16, 16),
-          new THREE.MeshBasicMaterial({ color: 0x0000ff }),
-        ),
-      )
-      pointLightTwo.position.set(0, 3, -2)
+      const ambientLight: THREE.AmbientLight = new THREE.AmbientLight(0x444444)
 
-      const pointLightThree = new THREE.PointLight(0x0000ff, 10)
-      pointLightThree.add(
-        new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 16, 16),
-          new THREE.MeshBasicMaterial({ color: 0x0000ff }),
-        ),
-      )
-      pointLightThree.position.set(0, 3, 2)
+      const pointLights: THREE.PointLight[] = []
+      for (let x = 0; x < 3; x++) {
+        for (let z = 0; z < 3; z++) {
+          const lightColor = Math.floor(Math.random() * 0x000066 + 0xaaaa99)
+          const pointLight = new THREE.PointLight(lightColor, 100)
+          pointLight.position.set(
+            x === 0 ? 0 : x === 1 ? -30 : 30,
+            5,
+            z === 0 ? 0 : z === 1 ? -30 : 30,
+          )
 
-      const pointLightFour = new THREE.PointLight(0xff0000, 10)
-      pointLightFour.add(
-        new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 16, 16),
-          new THREE.MeshBasicMaterial({ color: 0xff0000 }),
-        ),
-      )
-      pointLightFour.position.set(2, 3, 0)
+          pointLight.castShadow = true
+          pointLight.receiveShadow = true
 
-      const pointLightFive = new THREE.PointLight(0xff0000, 10)
-      pointLightFive.add(
-        new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 16, 16),
-          new THREE.MeshBasicMaterial({ color: 0xff0000 }),
-        ),
-      )
-      pointLightFive.position.set(-2, 3, 0)
-
-      const pointLightSix = new THREE.PointLight(0x00ff00, 10)
-      pointLightSix.add(
-        new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 16, 16),
-          new THREE.MeshBasicMaterial({ color: 0x00ff00 }),
-        ),
-      )
-      pointLightSix.position.set(0, 1, 0)
+          pointLights.push(pointLight)
+        }
+      }
 
       rendererProperties.current = {
-        scene: new THREE.Scene(),
-        camera: new THREE.PerspectiveCamera(
-          90,
-          rendererContainer.current.clientWidth /
-            rendererContainer.current.clientHeight,
-          0.1,
-          1000,
-        ),
+        scene,
+        camera,
         stats: new Stats(),
         objects: { mshFloor, cube, grid, xLine, yLine, zLine },
         ambientLight,
-        pointLights: [
-          pointLightOne,
-          pointLightTwo,
-          pointLightThree,
-          pointLightFour,
-          pointLightFive,
-          pointLightSix,
-        ],
+        pointLights,
       }
 
       try {
@@ -207,37 +200,26 @@ export const Four: AppComponent = (): React.ReactElement => {
         /* Empty */
       }
 
-      rendererProperties.current.camera.position.set(2, 5, 5)
-      rendererProperties.current.camera.lookAt(0, 3, 0)
-
-      const controls = new OrbitControls(
-        rendererProperties.current.camera,
-        renderer.current.domElement,
-      )
-      controls.target.set(0, 3, 0)
-      controls.update()
-
       rendererContainer.current.appendChild(
         rendererProperties.current.stats.dom,
       )
 
-      for (const pointLight of rendererProperties.current.pointLights) {
-        pointLight.castShadow = true
-        pointLight.receiveShadow = true
-
-        rendererProperties.current.scene.add(pointLight)
-      }
-
-      rendererProperties.current.scene.add(ambientLight)
+      scene.add(ambientLight)
+      scene.add(...rendererProperties.current.pointLights)
 
       for (const objectName in rendererProperties.current.objects) {
-        rendererProperties.current.scene.add(
-          rendererProperties.current.objects[objectName],
-        )
+        scene.add(rendererProperties.current.objects[objectName])
 
         rendererProperties.current.objects[objectName].castShadow = true
         rendererProperties.current.objects[objectName].receiveShadow = true
       }
+
+      rendererProperties.current!.objects.xLine.castShadow = false
+      rendererProperties.current!.objects.xLine.receiveShadow = false
+      rendererProperties.current!.objects.yLine.castShadow = false
+      rendererProperties.current!.objects.yLine.receiveShadow = false
+      rendererProperties.current!.objects.zLine.castShadow = false
+      rendererProperties.current!.objects.zLine.receiveShadow = false
 
       rendererProperties.current!.objects.grid.visible = false
       rendererProperties.current!.objects.xLine.visible = false
@@ -258,11 +240,77 @@ export const Four: AppComponent = (): React.ReactElement => {
     }
     window.addEventListener('resize', onResize)
 
-    const heldKeys: Record<string, boolean> = {}
+    const animate: XRFrameRequestCallback = (
+      time: DOMHighResTimeStamp,
+    ): void => {
+      rendererProperties.current?.stats.update()
 
+      const posXVal: number =
+        Math.sin(
+          ((time / (5000 * (0.01 / settings.current.speed.camera))) * Math.PI) /
+            2,
+        ) * 3
+      rendererProperties.current!.camera.position.x = posXVal
+      const posYVal: number =
+        Math.sin(
+          ((time / (7000 * (0.01 / settings.current.speed.camera))) * Math.PI) /
+            2,
+        ) * 2
+      rendererProperties.current!.camera.position.y = posYVal + 4
+      rendererProperties.current!.camera.lookAt(0, 3, 0)
+
+      if (heldKeysRef.current.value.ArrowUp) {
+        rendererProperties.current!.objects.cube.position.z -=
+          settings.current.speed.cube
+      }
+      if (heldKeysRef.current.value.ArrowDown) {
+        rendererProperties.current!.objects.cube.position.z +=
+          settings.current.speed.cube
+      }
+      if (heldKeysRef.current.value.ArrowRight) {
+        rendererProperties.current!.objects.cube.position.x +=
+          settings.current.speed.cube
+      }
+      if (heldKeysRef.current.value.ArrowLeft) {
+        rendererProperties.current!.objects.cube.position.x -=
+          settings.current.speed.cube
+      }
+
+      renderer.current!.render(
+        rendererProperties.current!.scene,
+        rendererProperties.current!.camera,
+      )
+    }
+    renderer.current.setAnimationLoop(animate)
+
+    const panel = new GUI({ autoPlace: true })
+    const speedFolder = panel.addFolder('Speed')
+    speedFolder.add(settings.current.speed, 'cube', 0.0, 1, 0.001)
+    speedFolder.add(settings.current.speed, 'camera', 0.0, 0.1, 0.0001)
+
+    return (): void => {
+      panel.destroy()
+
+      renderer.current!.setAnimationLoop(null)
+
+      window.removeEventListener('resize', onResize)
+    }
+  }, [])
+
+  React.useEffect((): (() => void) | void => {
     const onKeyup: (ev: KeyboardEvent) => void = (ev: KeyboardEvent): void => {
-      heldKeys[ev.key] = false
-      heldKeys[ev.code] = false
+      setHeldKeys(
+        (prevHeldKeys: Record<string, number>): Record<string, number> => {
+          const newHeldKeys = {
+            ...prevHeldKeys,
+          }
+
+          delete newHeldKeys[ev.key]
+          delete newHeldKeys[ev.code]
+
+          return newHeldKeys
+        },
+      )
     }
     window.addEventListener('keyup', onKeyup)
 
@@ -297,84 +345,60 @@ export const Four: AppComponent = (): React.ReactElement => {
           break
       }
 
-      heldKeys[ev.key] = true
-      heldKeys[ev.code] = true
+      setHeldKeys(
+        (prevHeldKeys: Record<string, number>): Record<string, number> => {
+          const time: number = performance.now()
+
+          return {
+            ...prevHeldKeys,
+            [ev.key]: time,
+            [ev.code]: time,
+          }
+        },
+      )
     }
     window.addEventListener('keydown', onKeydown)
 
-    const onMouseDown = () => {
-      rendererContainer.current?.classList.add(styles.grabbing)
-    }
-    window.addEventListener('mousedown', onMouseDown)
-
-    const onMouseUp = () => {
-      rendererContainer.current?.classList.remove(styles.grabbing)
-    }
-    window.addEventListener('mouseup', onMouseUp)
-
-    const animate: XRFrameRequestCallback = (): void => {
-      rendererProperties.current?.stats.update()
-
-      rendererProperties.current!.objects.cube.rotation.x +=
-        settings.current.speed.cube
-      rendererProperties.current!.objects.cube.rotation.y +=
-        settings.current.speed.cube
-
-      for (const pointLight of rendererProperties.current!.pointLights) {
-        const point: THREE.Vector3 = new THREE.Vector3(0, 3, 0)
-
-        rotateAboutPoint({
-          object3D: pointLight,
-          point,
-          axis: new THREE.Vector3(0, 1, 0),
-          theta: settings.current.speed.pointLights,
-        })
-
-        rotateAboutPoint({
-          object3D: pointLight,
-          point,
-          axis: new THREE.Vector3(1, 0, 0),
-          theta: settings.current.speed.pointLights,
-        })
-
-        rotateAboutPoint({
-          object3D: pointLight,
-          point,
-          axis: new THREE.Vector3(0, 0, 1),
-          theta: settings.current.speed.pointLights,
-        })
-      }
-
-      renderer.current!.render(
-        rendererProperties.current!.scene,
-        rendererProperties.current!.camera,
-      )
-    }
-    renderer.current.setAnimationLoop(animate)
-
-    const panel = new GUI({ autoPlace: true })
-    const speedFolder = panel.addFolder('Speed')
-    speedFolder.add(settings.current.speed, 'cube', 0.0, 0.1, 0.0001)
-    speedFolder.add(settings.current.speed, 'pointLights', 0.0, 0.1, 0.0001)
-
     return (): void => {
-      panel.destroy()
-
-      renderer.current!.setAnimationLoop(null)
-
-      window.removeEventListener('resize', onResize)
-
       window.removeEventListener('keydown', onKeydown)
       window.removeEventListener('keyup', onKeyup)
-
-      window.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
     }
-  }, [])
+  }, [heldKeys])
 
   return (
     <div className={styles.app}>
       <div ref={rendererContainer} className={styles.container}></div>
+
+      <div className={styles.controls}>
+        <div className={styles.spacer} />
+        <div
+          className={`${styles.control} ${heldKeys.ArrowUp ? styles.held : ''}`}
+        >
+          △
+        </div>
+        <div className={styles.spacer} />
+        <div
+          className={`${styles.control} ${
+            heldKeys.ArrowLeft ? styles.held : ''
+          }`}
+        >
+          ◁
+        </div>
+        <div
+          className={`${styles.control} ${
+            heldKeys.ArrowDown ? styles.held : ''
+          }`}
+        >
+          ▽
+        </div>
+        <button
+          className={`${styles.control} ${
+            heldKeys.ArrowRight ? styles.held : ''
+          }`}
+        >
+          ▷
+        </button>
+      </div>
     </div>
   )
 }

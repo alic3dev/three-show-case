@@ -25,11 +25,11 @@ const router = createBrowserRouter([
     element: <NavigationApp />,
   },
   ...apps.map(
-    (app: AppType, index: number): RouteObject => ({
+    ({ Component, displayName }: AppType, index: number): RouteObject => ({
       path: `/examples/${index + 1}`,
       element: (
-        <WithTitle title={app.displayName}>
-          <app.component />
+        <WithTitle title={displayName}>
+          <Component />
         </WithTitle>
       ),
     }),

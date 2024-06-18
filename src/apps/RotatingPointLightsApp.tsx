@@ -10,11 +10,11 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/Second.module.scss'
+import styles from '@/apps/RotatingPointLightsApp.module.scss'
 
 export const displayName: string = 'Rotating Point Lights'
 
-export const Second: AppComponent = (): React.ReactElement => {
+export const RotatingPointLightsApp: AppComponent = (): React.ReactElement => {
   const settings = React.useRef<{
     speed: { cube: number; pointLights: number; camera: number }
   }>({

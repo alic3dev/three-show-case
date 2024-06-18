@@ -10,11 +10,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/Five.module.scss'
+import styles from '@/apps/BouncingPhysicsApp.module.scss'
 
 export const displayName: string = 'Bouncing Physics'
 
-export const Five: AppComponent = (): React.ReactElement => {
+export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })

@@ -207,9 +207,39 @@ declare module Ammo {
     setMargin(margin: number)
   }
 
+  // "btCollisionShape"
+  // "btConcaveShape"
+  // "btConvexShape"
+  // "btCapsuleShape"
+  // "btCylinderShape"
+  // "btConeShape"
+  // "btTriangleMeshShape"
+  // "btConvexTriangleMeshShape"
+  // "btBoxShape"
+  // "btSphereShape"
+  // "btMultiSphereShape"
+  // "btConvexHullShape"
+  // "btCompoundShape"
+  // "btEmptyShape"
+  // "btStaticPlaneShape"
+  // "btBvhTriangleMeshShape"
+  // "btHeightfieldTerrainShape"
+  // "btGImpactCompoundShape"
+  // "btGImpactMeshShape"
+
   interface BoxShape extends Shape {}
   interface BoxShapeConstructor {
     new (vector: Vector3): BoxShape
+  }
+
+  interface ConeShape extends Shape {}
+  interface ConeShapeConstructor {
+    new (radius: number, height: number): ConeShape
+  }
+
+  interface CylinderShape extends Shape {}
+  interface CylinderShapeConstructor {
+    new (vector: Vector3): CylinderShape
   }
 
   interface SphereShape extends Shape {}
@@ -235,6 +265,8 @@ declare module Ammo {
 
     // Shapes
     btBoxShape: BoxShapeConstructor
+    btConeShape: ConeShapeConstructor
+    btCylinderShape: CylinderShapeConstructor
     btSphereShape: SphereShapeConstructor
   }
 }

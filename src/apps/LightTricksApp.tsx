@@ -11,11 +11,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 
-import styles from '@/apps/Six.module.scss'
+import styles from '@/apps/LightTricksApp.module.scss'
 
 export const displayName: string = 'Light Tricks'
 
-export const Six: AppComponent = (): React.ReactElement => {
+export const LightTricksApp: AppComponent = (): React.ReactElement => {
   const settings = React.useRef<{
     rotation: {
       speed: number
