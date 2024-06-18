@@ -21,7 +21,7 @@ export function NavigationApp(): React.ReactElement {
           (app: App, index: number): React.ReactElement => (
             <li key={`${app.displayName}-${index}`} className={styles.example}>
               <Link to={`/examples/${index + 1}`}>
-                {app.displayName ?? app.component.name}
+                {app.displayName ?? app.Component.name}
               </Link>
             </li>
           ),
