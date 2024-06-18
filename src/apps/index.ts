@@ -29,6 +29,7 @@ import {
   FPRoomGenerationApp,
   displayName as eigthDisplayName,
 } from '@/apps/FPRoomGenerationApp'
+import { OceanApp, displayName as ninthDisplayName } from '@/apps/OceanApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
@@ -39,6 +40,7 @@ export const apps: App[] = [
   { Component: LightTricksApp, displayName: sixthDisplayName },
   { Component: ChunkGenerationApp, displayName: seventhDisplayName },
   { Component: FPRoomGenerationApp, displayName: eigthDisplayName },
+  { Component: OceanApp, displayName: ninthDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'
