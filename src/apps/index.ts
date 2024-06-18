@@ -1,23 +1,44 @@
 import type { App } from '@/apps/types'
 
-import { First, displayName as firstDisplayName } from '@/apps/First'
-import { Second, displayName as secondDisplayName } from '@/apps/Second'
-import { Three, displayName as thirdDisplayName } from '@/apps/Three'
-import { Four, displayName as fourthDisplayName } from '@/apps/Four'
-import { Five, displayName as fifthDisplayName } from '@/apps/Five'
-import { Six, displayName as sixthDisplayName } from '@/apps/Six'
-import { Seven, displayName as seventhDisplayName } from '@/apps/Seven'
-import { Eight, displayName as eigthDisplayName } from '@/apps/Eight'
+import { BasicCube, displayName as firstDisplayName } from '@/apps/BasicCube'
+import {
+  RotatingPointLightsApp,
+  displayName as secondDisplayName,
+} from '@/apps/RotatingPointLightsApp'
+import {
+  ObjectControlApp,
+  displayName as thirdDisplayName,
+} from '@/apps/ObjectControlApp'
+import {
+  DraggableCameraApp,
+  displayName as fourthDisplayName,
+} from '@/apps/DraggableCameraApp'
+import {
+  BouncingPhysicsApp,
+  displayName as fifthDisplayName,
+} from '@/apps/BouncingPhysicsApp'
+import {
+  LightTricksApp,
+  displayName as sixthDisplayName,
+} from '@/apps/LightTricksApp'
+import {
+  ChunkGenerationApp,
+  displayName as seventhDisplayName,
+} from '@/apps/ChunkGenerationApp'
+import {
+  FPRoomGenerationApp,
+  displayName as eigthDisplayName,
+} from '@/apps/FPRoomGenerationApp'
 
 export const apps: App[] = [
-  { component: First, displayName: firstDisplayName },
-  { component: Second, displayName: secondDisplayName },
-  { component: Three, displayName: thirdDisplayName },
-  { component: Four, displayName: fourthDisplayName },
-  { component: Five, displayName: fifthDisplayName },
-  { component: Six, displayName: sixthDisplayName },
-  { component: Seven, displayName: seventhDisplayName },
-  { component: Eight, displayName: eigthDisplayName },
+  { Component: BasicCube, displayName: firstDisplayName },
+  { Component: RotatingPointLightsApp, displayName: secondDisplayName },
+  { Component: ObjectControlApp, displayName: thirdDisplayName },
+  { Component: DraggableCameraApp, displayName: fourthDisplayName },
+  { Component: BouncingPhysicsApp, displayName: fifthDisplayName },
+  { Component: LightTricksApp, displayName: sixthDisplayName },
+  { Component: ChunkGenerationApp, displayName: seventhDisplayName },
+  { Component: FPRoomGenerationApp, displayName: eigthDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'
