@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./../",
+    "module": "NodeNext",
+    "lib": ["ESNext"],
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
