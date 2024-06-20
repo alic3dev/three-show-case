@@ -1,0 +1,9 @@
+@import '@/apps/StandardApp.module.scss';
+
+.container {
+  cursor: grab;
+
+  &.grabbing {
+    cursor: grabbing;
+  }
+}

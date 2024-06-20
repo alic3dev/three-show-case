@@ -12,7 +12,7 @@ import { LoadingScreen } from '@/components/LoadingScreen'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { generateRoomLayout } from '@/utils/rooms'
 
-import styles from '@/apps/FPRoomGenerationApp.module.scss'
+import styles from '@/apps/StandardApp.module.scss'
 
 export const displayName: string = 'First Person Room Generation'
 

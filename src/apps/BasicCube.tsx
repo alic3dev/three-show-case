@@ -8,7 +8,7 @@ import Stats from 'three/addons/libs/stats.module.js'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/BasicCube.module.scss'
+import styles from '@/apps/StandardApp.module.scss'
 
 export const displayName: string = 'Basic Cube'
 
