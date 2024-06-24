@@ -11,7 +11,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 
-import styles from '@/apps/LightTricksApp.module.scss'
+import styles from '@/apps/StandardAppWithGrab.module.scss'
 
 export const displayName: string = 'Light Tricks'
 

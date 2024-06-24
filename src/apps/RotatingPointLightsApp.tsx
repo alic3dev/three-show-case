@@ -10,7 +10,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/RotatingPointLightsApp.module.scss'
+import styles from '@/apps/StandardApp.module.scss'
 
 export const displayName: string = 'Rotating Point Lights'
 

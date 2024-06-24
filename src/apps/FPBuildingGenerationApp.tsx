@@ -1,27 +1,27 @@
 import type { AppComponent } from '@/apps/types'
+import type { Room } from '@/utils/rooms'
 
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
 import Stats from 'three/addons/libs/stats.module'
-import { GUI } from 'three/addons/libs/lil-gui.module.min'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
 import { AmmoHelper } from '@/utils/ammo/AmmoHelper'
 import { EventsManager } from '@/utils/EventsManager'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
-import { generateRoomLayout } from '@/utils/rooms'
+import { generateBuildingLayout } from '@/utils/rooms'
 
 import styles from '@/apps/StandardApp.module.scss'
 import { randomColor } from '@/utils/colors'
 
-export const displayName: string = 'First Person Room Generation'
+export const displayName: string = 'First Person Building Generation'
 
 const ROOM_SIZE: number = 30
 
-export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
+export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
   const [loadState, setLoadState] = React.useState<number>(0)
 
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
@@ -37,7 +37,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
     objects: Record<string, THREE.Object3D>
     debugObjects: Record<string, THREE.Object3D>
     ambientLight: THREE.AmbientLight
+    roomLayout: Room[]
   }>()
+
+  const minimapRef = React.useRef<HTMLCanvasElement>(null)
 
   const player = React.useRef<{
     object: THREE.Object3D
@@ -73,8 +76,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
       rendererContainer.current.appendChild(renderer.current.domElement)
     }
-
-    const panel: GUI = new GUI({ autoPlace: true })
 
     if (!rendererProperties.current) {
       window.Ammo().then((Ammo: Ammo.Ammo): void => {
@@ -128,35 +129,16 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           normalMap: floorNormalTexture,
         })
 
-        // const floorWallNormalTexture = new THREE.TextureLoader().load(
-        //   '/assets/textures/grasslight-big-nm.jpg',
-        // )
-        // floorWallNormalTexture.wrapS = floorWallNormalTexture.wrapT =
-        //   THREE.RepeatWrapping
-
-        // const floorWallTextureScale: number = 1
-
-        // floorWallNormalTexture.repeat.set(
-        //   floorWallTextureScale,
-        //   floorWallTextureScale,
-        // )
-
         const floorWallMaterial = new THREE.MeshPhongMaterial({
           color: 0xffffff,
           specular: 0x606060,
-
           reflectivity: 100,
           shininess: 30,
-
-          // map: new THREE.Texture()
-          // normalMap: floorWallNormalTexture,
-          // normalScale: new THREE.Vector2(50, 50),
         })
         const floorMaterial = floorTexturedMaterial
 
         const lightStructureMaterial = new THREE.MeshPhongMaterial({
           color: 0x404040,
-          // emissive: 0xff0000,
           specular: 0x606060,
           reflectivity: 10,
           side: THREE.DoubleSide,
@@ -184,11 +166,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         const nsWallWithDoorSidesGeometry: THREE.BoxGeometry =
           new THREE.BoxGeometry((ROOM_SIZE - ROOM_SIZE / 4) / 2, ROOM_SIZE, 1)
 
-        const roomLayout: THREE.Vector2[] = generateRoomLayout()
+        const roomLayout: Room[] = generateBuildingLayout()
         const rooms = new THREE.Group()
 
-        for (let i: number = 0; i < roomLayout.length; i++) {
-          const roomPosition: THREE.Vector2 = roomLayout[i]
+        for (const room of roomLayout) {
           const roomGroup = new THREE.Group()
 
           const floorMesh: THREE.Mesh = new THREE.Mesh(
@@ -204,11 +185,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           const floorBody: Ammo.RigidBody = ammoHelper.createRigidBody({
             object: floorMesh,
             shape: floorShape,
-
             pos: new THREE.Vector3(
-              floorMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
+              floorMesh.position.x + room.position.x * (ROOM_SIZE / 1),
               floorMesh.position.y + -0.5,
-              floorMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
+              floorMesh.position.z + room.position.y * (ROOM_SIZE / 1),
             ),
           })
           floorBody.setFriction(0.5)
@@ -230,9 +210,9 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             object: ceilingMesh,
             shape: ceilingShape,
             pos: new THREE.Vector3(
-              ceilingMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
+              ceilingMesh.position.x + room.position.x * (ROOM_SIZE / 1),
               ceilingMesh.position.y + -0.5,
-              ceilingMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
+              ceilingMesh.position.z + room.position.y * (ROOM_SIZE / 1),
             ),
           })
           ceilingBody.setFriction(0.5)
@@ -240,127 +220,120 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
           roomGroup.add(ceilingMesh)
 
-          if (
-            roomLayout.find(
-              (room: THREE.Vector2): boolean =>
-                room.x === roomPosition.x && room.y === roomPosition.y - 1,
-            )
-          ) {
-            if (Math.random() > 0.5) {
-              const northWallUpperMesh: THREE.Mesh = new THREE.Mesh(
-                nsWallWithDoorUpperGeometry,
-                floorWallMaterial,
-              )
-              northWallUpperMesh.position.set(
-                0,
-                ROOM_SIZE / 2 + (ROOM_SIZE - ROOM_SIZE / 2) / 2,
-                -ROOM_SIZE / 2 + 0.5,
-              )
-              northWallUpperMesh.receiveShadow = true
-              northWallUpperMesh.castShadow = true
+          // if (room.walls.includes('North')) {
+          //   if (Math.random() > 0.5) {
+          //     const northWallUpperMesh: THREE.Mesh = new THREE.Mesh(
+          //       nsWallWithDoorUpperGeometry,
+          //       floorWallMaterial,
+          //     )
+          //     northWallUpperMesh.position.set(
+          //       0,
+          //       ROOM_SIZE / 2 + (ROOM_SIZE - ROOM_SIZE / 2) / 2,
+          //       -ROOM_SIZE / 2 + 0.5,
+          //     )
+          //     northWallUpperMesh.receiveShadow = true
+          //     northWallUpperMesh.castShadow = true
 
-              const northWallUpperShape: Ammo.BoxShape = new Ammo.btBoxShape(
-                new Ammo.btVector3(
-                  ROOM_SIZE / 4 / 2,
-                  (ROOM_SIZE - ROOM_SIZE / 2) / 2,
-                  0.5,
-                ),
-              )
-              const northWallUpperBody: Ammo.RigidBody =
-                ammoHelper.createRigidBody({
-                  object: northWallUpperMesh,
-                  shape: northWallUpperShape,
+          //     const northWallUpperShape: Ammo.BoxShape = new Ammo.btBoxShape(
+          //       new Ammo.btVector3(
+          //         ROOM_SIZE / 4 / 2,
+          //         (ROOM_SIZE - ROOM_SIZE / 2) / 2,
+          //         0.5,
+          //       ),
+          //     )
+          //     const northWallUpperBody: Ammo.RigidBody =
+          //       ammoHelper.createRigidBody({
+          //         object: northWallUpperMesh,
+          //         shape: northWallUpperShape,
+          //         pos: new THREE.Vector3(
+          //           northWallUpperMesh.position.x +
+          //             room.position.x * (ROOM_SIZE / 1),
 
-                  pos: new THREE.Vector3(
-                    northWallUpperMesh.position.x +
-                      roomPosition.x * (ROOM_SIZE / 1),
+          //           northWallUpperMesh.position.y,
 
-                    northWallUpperMesh.position.y,
+          //           northWallUpperMesh.position.z +
+          //             room.position.y * (ROOM_SIZE / 1),
+          //         ),
+          //       })
+          //     northWallUpperBody.setFriction(0.5)
+          //     northWallUpperBody.setRestitution(1)
 
-                    northWallUpperMesh.position.z +
-                      roomPosition.y * (ROOM_SIZE / 1),
-                  ),
-                })
-              northWallUpperBody.setFriction(0.5)
-              northWallUpperBody.setRestitution(1)
+          //     roomGroup.add(northWallUpperMesh)
 
-              roomGroup.add(northWallUpperMesh)
+          //     const northWallWestMesh: THREE.Mesh = new THREE.Mesh(
+          //       nsWallWithDoorSidesGeometry,
+          //       floorWallMaterial,
+          //     )
+          //     northWallWestMesh.position.set(
+          //       -(ROOM_SIZE / 2) + (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
+          //       ROOM_SIZE / 2,
+          //       -ROOM_SIZE / 2 + 0.5,
+          //     )
+          //     northWallWestMesh.receiveShadow = true
+          //     northWallWestMesh.castShadow = true
 
-              const northWallWestMesh: THREE.Mesh = new THREE.Mesh(
-                nsWallWithDoorSidesGeometry,
-                floorWallMaterial,
-              )
-              northWallWestMesh.position.set(
-                -(ROOM_SIZE / 2) + (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
-                ROOM_SIZE / 2,
-                -ROOM_SIZE / 2 + 0.5,
-              )
-              northWallWestMesh.receiveShadow = true
-              northWallWestMesh.castShadow = true
+          //     const northWallWestShape: Ammo.BoxShape = new Ammo.btBoxShape(
+          //       new Ammo.btVector3(
+          //         (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
+          //         ROOM_SIZE,
+          //         1,
+          //       ),
+          //     )
+          //     const northWallWestBody: Ammo.RigidBody =
+          //       ammoHelper.createRigidBody({
+          //         object: northWallWestMesh,
+          //         shape: northWallWestShape,
+          //         pos: new THREE.Vector3(
+          //           northWallWestMesh.position.x +
+          //             room.position.x * (ROOM_SIZE / 1),
+          //           -0.5,
+          //           northWallWestMesh.position.z +
+          //             room.position.y * (ROOM_SIZE / 1),
+          //         ),
+          //       })
+          //     northWallWestBody.setFriction(0.5)
+          //     northWallWestBody.setRestitution(1)
 
-              const northWallWestShape: Ammo.BoxShape = new Ammo.btBoxShape(
-                new Ammo.btVector3(
-                  (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
-                  ROOM_SIZE,
-                  1,
-                ),
-              )
-              const northWallWestBody: Ammo.RigidBody =
-                ammoHelper.createRigidBody({
-                  object: northWallWestMesh,
-                  shape: northWallWestShape,
+          //     roomGroup.add(northWallWestMesh)
 
-                  pos: new THREE.Vector3(
-                    northWallWestMesh.position.x +
-                      roomPosition.x * (ROOM_SIZE / 1),
-                    -0.5,
-                    northWallWestMesh.position.z +
-                      roomPosition.y * (ROOM_SIZE / 1),
-                  ),
-                })
-              northWallWestBody.setFriction(0.5)
-              northWallWestBody.setRestitution(1)
+          //     const northWallEastMesh: THREE.Mesh = new THREE.Mesh(
+          //       nsWallWithDoorSidesGeometry,
+          //       floorWallMaterial,
+          //     )
+          //     northWallEastMesh.position.set(
+          //       ROOM_SIZE / 2 - (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
+          //       ROOM_SIZE / 2,
+          //       -ROOM_SIZE / 2 + 0.5,
+          //     )
+          //     northWallEastMesh.receiveShadow = true
+          //     northWallEastMesh.castShadow = true
 
-              roomGroup.add(northWallWestMesh)
+          //     const northWallEastShape: Ammo.BoxShape = new Ammo.btBoxShape(
+          //       new Ammo.btVector3(
+          //         (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
+          //         ROOM_SIZE,
+          //         1,
+          //       ),
+          //     )
+          //     const northWallEastBody: Ammo.RigidBody =
+          //       ammoHelper.createRigidBody({
+          //         object: northWallEastMesh,
+          //         shape: northWallEastShape,
+          //         pos: new THREE.Vector3(
+          //           northWallEastMesh.position.x +
+          //             room.position.x * (ROOM_SIZE / 1),
+          //           -0.5,
+          //           northWallEastMesh.position.z +
+          //             room.position.y * (ROOM_SIZE / 1),
+          //         ),
+          //       })
+          //     northWallEastBody.setFriction(0.5)
+          //     northWallEastBody.setRestitution(1)
 
-              const northWallEastMesh: THREE.Mesh = new THREE.Mesh(
-                nsWallWithDoorSidesGeometry,
-                floorWallMaterial,
-              )
-              northWallEastMesh.position.set(
-                ROOM_SIZE / 2 - (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
-                ROOM_SIZE / 2,
-                -ROOM_SIZE / 2 + 0.5,
-              )
-              northWallEastMesh.receiveShadow = true
-              northWallEastMesh.castShadow = true
-
-              const northWallEastShape: Ammo.BoxShape = new Ammo.btBoxShape(
-                new Ammo.btVector3(
-                  (ROOM_SIZE - ROOM_SIZE / 4) / 2 / 2,
-                  ROOM_SIZE,
-                  1,
-                ),
-              )
-              const northWallEastBody: Ammo.RigidBody =
-                ammoHelper.createRigidBody({
-                  object: northWallEastMesh,
-                  shape: northWallEastShape,
-
-                  pos: new THREE.Vector3(
-                    northWallEastMesh.position.x +
-                      roomPosition.x * (ROOM_SIZE / 1),
-                    -0.5,
-                    northWallEastMesh.position.z +
-                      roomPosition.y * (ROOM_SIZE / 1),
-                  ),
-                })
-              northWallEastBody.setFriction(0.5)
-              northWallEastBody.setRestitution(1)
-
-              roomGroup.add(northWallEastMesh)
-            }
-          } else {
+          //     roomGroup.add(northWallEastMesh)
+          //   }
+          // } else {
+          if (room.walls.includes('North')) {
             const northWallMesh: THREE.Mesh = new THREE.Mesh(
               nsWallGeometry,
               floorWallMaterial,
@@ -375,11 +348,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             const northWallBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: northWallMesh,
               shape: northWallShape,
-
               pos: new THREE.Vector3(
-                northWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
+                northWallMesh.position.x + room.position.x * (ROOM_SIZE / 1),
                 -0.5,
-                northWallMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
+                northWallMesh.position.z + room.position.y * (ROOM_SIZE / 1),
               ),
             })
             northWallBody.setFriction(0.5)
@@ -390,12 +362,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
           const generateSouthDoors: boolean = false
 
-          const hasRoomToSouth: boolean = !!roomLayout.find(
-            (room) =>
-              room.x === roomPosition.x && room.y === roomPosition.y + 1,
-          )
-
-          if (hasRoomToSouth && generateSouthDoors) {
+          if (!room.walls.includes('South') && generateSouthDoors) {
             const southWallUpperMesh: THREE.Mesh = new THREE.Mesh(
               nsWallWithDoorUpperGeometry,
               floorWallMaterial,
@@ -422,10 +389,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
                 pos: new THREE.Vector3(
                   southWallUpperMesh.position.x +
-                    roomPosition.x * (ROOM_SIZE / 1),
+                    room.position.x * (ROOM_SIZE / 1),
                   southWallUpperMesh.position.y,
                   southWallUpperMesh.position.z +
-                    roomPosition.y * (ROOM_SIZE / 1),
+                    room.position.y * (ROOM_SIZE / 1),
                 ),
               })
             southWallUpperBody.setFriction(0.5)
@@ -459,10 +426,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
                 pos: new THREE.Vector3(
                   southWallWestMesh.position.x -
-                    roomPosition.x * (ROOM_SIZE / 1),
+                    room.position.x * (ROOM_SIZE / 1),
                   -0.5,
                   southWallWestMesh.position.z +
-                    roomPosition.y * (ROOM_SIZE / 1),
+                    room.position.y * (ROOM_SIZE / 1),
                 ),
               })
             southWallWestBody.setFriction(0.5)
@@ -496,17 +463,17 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
                 pos: new THREE.Vector3(
                   southWallEastMesh.position.x +
-                    roomPosition.x * (ROOM_SIZE / 1),
+                    room.position.x * (ROOM_SIZE / 1),
                   -0.5,
                   southWallEastMesh.position.z +
-                    roomPosition.y * (ROOM_SIZE / 1),
+                    room.position.y * (ROOM_SIZE / 1),
                 ),
               })
             southWallEastBody.setFriction(0.5)
             southWallEastBody.setRestitution(1)
 
             roomGroup.add(southWallEastMesh)
-          } else if (!hasRoomToSouth) {
+          } else if (room.walls.includes('South')) {
             const southWallMesh: THREE.Mesh = new THREE.Mesh(
               nsWallGeometry,
               floorWallMaterial,
@@ -523,9 +490,9 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
               shape: southWallShape,
 
               pos: new THREE.Vector3(
-                southWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
+                southWallMesh.position.x + room.position.x * (ROOM_SIZE / 1),
                 -0.5,
-                southWallMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
+                southWallMesh.position.z + room.position.y * (ROOM_SIZE / 1),
               ),
             })
             southWallBody.setFriction(0.5)
@@ -534,12 +501,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             roomGroup.add(southWallMesh)
           }
 
-          if (
-            !roomLayout.find(
-              (room) =>
-                room.x === roomPosition.x + 1 && room.y === roomPosition.y,
-            )
-          ) {
+          if (room.walls.includes('East')) {
             const eastWallMesh: THREE.Mesh = new THREE.Mesh(
               ewWallGeometry,
               floorWallMaterial,
@@ -556,9 +518,9 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
               shape: eastWallShape,
 
               pos: new THREE.Vector3(
-                eastWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
+                eastWallMesh.position.x + room.position.x * (ROOM_SIZE / 1),
                 -0.5,
-                eastWallMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
+                eastWallMesh.position.z + room.position.y * (ROOM_SIZE / 1),
               ),
             })
             eastWallBody.setFriction(0.5)
@@ -567,12 +529,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             roomGroup.add(eastWallMesh)
           }
 
-          if (
-            !roomLayout.find(
-              (room) =>
-                room.x === roomPosition.x - 1 && room.y === roomPosition.y,
-            )
-          ) {
+          if (room.walls.includes('West')) {
             const westWallMesh: THREE.Mesh = new THREE.Mesh(
               ewWallGeometry,
               floorWallMaterial,
@@ -589,9 +546,9 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
               shape: westWallShape,
 
               pos: new THREE.Vector3(
-                westWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
+                westWallMesh.position.x + room.position.x * (ROOM_SIZE / 1),
                 -0.5,
-                westWallMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
+                westWallMesh.position.z + room.position.y * (ROOM_SIZE / 1),
               ),
             })
             westWallBody.setFriction(0.5)
@@ -600,7 +557,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             roomGroup.add(westWallMesh)
           }
 
-          if (i % 4 === 0) {
+          if (room.light) {
             const lightStructure: THREE.Group = new THREE.Group()
 
             const lightTube = new THREE.Mesh(
@@ -625,7 +582,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
               new THREE.ConeGeometry(2, 1, 32 * 4, 1, true, 0, Math.PI * 2),
               lightStructureMaterial,
             )
-            // lightCone.receiveShadow = true
             lightCone.castShadow = true
 
             lightStructure.add(lightCone)
@@ -637,9 +593,9 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             )
             // pointLight.add(new THREE.Mesh(new THREE.Geom))
 
-            pointLight.castShadow = true
+            // FIXME: Turn this back on at some point
+            pointLight.castShadow = false
 
-            // pointLight.shadow.blurSamples = 128
             pointLight.shadow.mapSize.width = 8192 / 8
             pointLight.shadow.mapSize.height = pointLight.shadow.mapSize.width
             pointLight.shadow.radius = 2
@@ -661,11 +617,11 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
               pos: new THREE.Vector3(
                 lightStructure.position.x +
                   lightTube.position.x +
-                  roomPosition.x * (ROOM_SIZE / 1),
+                  room.position.x * (ROOM_SIZE / 1),
                 lightStructure.position.y + lightTube.position.y + 5,
                 lightStructure.position.z +
                   lightTube.position.z +
-                  roomPosition.y * (ROOM_SIZE / 1),
+                  room.position.y * (ROOM_SIZE / 1),
               ),
             })
             lightTubeBody.setFriction(0.5)
@@ -676,27 +632,30 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             const lightConeBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: lightCone,
               shape: lightConeShape,
+
               pos: new THREE.Vector3(
                 lightStructure.position.x +
                   lightCone.position.x +
-                  roomPosition.x * (ROOM_SIZE / 1),
+                  room.position.x * (ROOM_SIZE / 1),
                 lightStructure.position.y + lightCone.position.y,
                 lightStructure.position.z +
                   lightCone.position.z +
-                  roomPosition.y * (ROOM_SIZE / 1),
+                  room.position.y * (ROOM_SIZE / 1),
               ),
             })
             lightConeBody.setFriction(0.5)
             lightConeBody.setRestitution(1)
+
+            // pointLight.visible = false
 
             roomGroup.add(lightStructure)
           }
 
           const roomAxesHelper = new THREE.AxesHelper(1)
           roomAxesHelper.position.set(
-            roomPosition.x * ROOM_SIZE,
+            room.position.x * ROOM_SIZE,
             0,
-            roomPosition.y * ROOM_SIZE,
+            room.position.y * ROOM_SIZE,
           )
           axesLines.add(roomAxesHelper)
 
@@ -708,94 +667,31 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           )
 
           roomGridHelper.position.set(
-            roomPosition.x * ROOM_SIZE,
+            room.position.x * ROOM_SIZE,
             -0.4,
-            roomPosition.y * ROOM_SIZE,
+            room.position.y * ROOM_SIZE,
           )
           grid.add(roomGridHelper)
 
           roomGroup.position.set(
-            roomPosition.x * ROOM_SIZE,
+            room.position.x * ROOM_SIZE,
             -0.5,
-            roomPosition.y * ROOM_SIZE,
+            room.position.y * ROOM_SIZE,
           )
           rooms.add(roomGroup)
         }
 
         const ambientLight: THREE.AmbientLight = new THREE.AmbientLight(
-          0x404040,
+          0xffffff,
           0,
         )
         scene.add(ambientLight)
-
-        const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry(
-          0.5,
-        )
-        const sphereMaterial = new THREE.MeshPhongMaterial({
-          color: 0xffffff,
-          specular: 0x404040,
-          shininess: 500,
-          // reflectivity: 500,
-        })
-
-        const spheres: THREE.Object3D[] = []
-        const sphereQuaternion: THREE.Quaternion = new THREE.Quaternion(
-          0,
-          0,
-          0,
-          1,
-        )
-
-        for (let i = 0; i < 100; i++) {
-          const x: number = Math.floor(i / 10)
-          const z: number = i % 10
-
-          const sphere: THREE.Mesh = new THREE.Mesh(
-            sphereGeometry,
-            sphereMaterial,
-          )
-
-          const positionVector: THREE.Vector3 = new THREE.Vector3(
-            x * 2 - 9,
-            // ((Math.abs((z - 4.5) / 4.5) + Math.abs((x - 4.5) / 4.5)) / 2) * 60 +
-            10,
-            z * 2 - 9,
-          )
-
-          sphere.position.set(
-            positionVector.x,
-            positionVector.y,
-            positionVector.z,
-          )
-
-          sphere.castShadow = true
-          sphere.receiveShadow = true
-
-          const sphereShape: Ammo.SphereShape = new Ammo.btSphereShape(0.5)
-
-          spheres.push(sphere)
-
-          const body: Ammo.RigidBody = ammoHelper.createRigidBody({
-            object: sphere,
-            shape: sphereShape,
-            mass: 1,
-            quaternion: sphereQuaternion,
-            vel: new THREE.Vector3(
-              Math.random() * 10 - 5,
-              Math.random() * 10 - 5,
-              Math.random() * 10 - 5,
-            ),
-          })
-          body.setRestitution(0.9)
-        }
 
         const playerObject: THREE.Group = new THREE.Group()
         const playerMesh = new THREE.Mesh(
           new THREE.BoxGeometry(1, 3, 1),
           new THREE.MeshBasicMaterial({
             color: 0x000000,
-            // transparent: true,
-            // opacity: 0,
           }),
         )
         playerMesh.castShadow = true
@@ -832,6 +728,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             rooms,
           },
           debugObjects: { grid, axesLines },
+          roomLayout,
           ambientLight,
         }
 
@@ -840,8 +737,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           body: playerBody,
           mouseLocked: false,
         }
-
-        rendererProperties.current.scene.add(...spheres)
 
         try {
           const statsPanelValue = JSON.parse(
@@ -868,9 +763,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             rendererProperties.current.objects[objectName],
           )
         }
-
-        // mshFloor.castShadow = false
-        // mshFloor.receiveShadow = true
 
         for (const objectName in rendererProperties.current.debugObjects) {
           const debugObject: THREE.Object3D =
@@ -964,7 +856,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
             clearTimeout(timeoutHandle)
 
-            timeoutHandle = setTimeout((): void => {
+            timeoutHandle = setTimeout(() => {
               playerBody.setAngularVelocity(new Ammo.btVector3(0, 0, 0))
             }, (1 / 60) * 1000)
           }
@@ -990,11 +882,11 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         eventsManager.addDocumentEvent('pointerlockchange', lockChangeAlert)
 
         const onMouseDown = (): void => {
-          const pointerLockPromise =
+          const pointerLockPromise: Promise<void> | undefined =
             // @ts-expect-error: This is valid, not sure why TS doesn't think so
             renderer.current?.domElement.requestPointerLock({
               unadjustedMovement: true,
-            })
+            }) as Promise<void> | undefined
 
           if (!pointerLockPromise) {
             renderer.current?.domElement.requestPointerLock()
@@ -1009,10 +901,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         }
         eventsManager.addWindowEvent('mouseup', onMouseUp)
 
-        const MOVEMENT_SPEED: number = 0.2
-
         const clock = new THREE.Clock()
         const animate: XRFrameRequestCallback = (): void => {
+          const MOVEMENT_SPEED: number = heldKeys['shift'] ? 0.5 : 0.2
+
           rendererProperties.current?.stats.update()
 
           if (heldKeys['ArrowUp'] || heldKeys['w']) {
@@ -1064,6 +956,11 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
           ammoHelper.step(clock.getDelta())
 
+          const prevVelocity = playerBody.getLinearVelocity()
+          playerBody.setLinearVelocity(
+            new Ammo.btVector3(0, prevVelocity.y(), 0),
+          )
+
           renderer.current!.render(
             rendererProperties.current!.scene,
             rendererProperties.current!.camera,
@@ -1076,17 +973,124 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
     return (): void => {
       aborted = true
 
-      panel.destroy()
-
       renderer.current!.setAnimationLoop(null)
 
       eventsManager.removeAllEvents()
     }
   }, [])
 
+  React.useEffect((): void | (() => void) => {
+    // TODO: This should probably be an element in THREE rather than a seperate canvas
+
+    let ctx: CanvasRenderingContext2D | null = null
+
+    let minimapFrameHandle: number
+    let prevTime: DOMHighResTimeStamp = 0
+
+    const minimapFrame = (time: DOMHighResTimeStamp): void => {
+      if (
+        !minimapRef.current ||
+        !rendererProperties.current?.roomLayout ||
+        !player.current ||
+        (prevTime !== 0 && time - prevTime < 100)
+      ) {
+        minimapFrameHandle = window.requestAnimationFrame(minimapFrame)
+        return
+      } else if (!ctx) {
+        ctx = minimapRef.current.getContext('2d')
+
+        if (!ctx) {
+          minimapFrameHandle = window.requestAnimationFrame(minimapFrame)
+          return
+        }
+      }
+
+      ctx.resetTransform()
+
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
+      ctx.fillStyle = '#00000066'
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
+      ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2)
+
+      ctx.strokeStyle = '#00ff00'
+      ctx.lineWidth = 3
+
+      ctx.translate(
+        player.current.object.position.x,
+        player.current.object.position.z,
+      )
+
+      ctx.rotate(Math.PI)
+
+      for (const room of rendererProperties.current.roomLayout) {
+        const roomOffset = new THREE.Vector2(
+          room.position.x * ROOM_SIZE,
+          room.position.y * ROOM_SIZE,
+        )
+
+        if (room.walls.includes('North')) {
+          ctx.beginPath()
+          ctx.moveTo(roomOffset.x - ROOM_SIZE / 2, roomOffset.y - ROOM_SIZE / 2)
+          ctx.lineTo(roomOffset.x + ROOM_SIZE / 2, roomOffset.y - ROOM_SIZE / 2)
+
+          ctx.stroke()
+        }
+
+        if (room.walls.includes('South')) {
+          ctx.beginPath()
+          ctx.moveTo(roomOffset.x - ROOM_SIZE / 2, roomOffset.y + ROOM_SIZE / 2)
+          ctx.lineTo(roomOffset.x + ROOM_SIZE / 2, roomOffset.y + ROOM_SIZE / 2)
+
+          ctx.stroke()
+        }
+
+        if (room.walls.includes('East')) {
+          ctx.beginPath()
+          ctx.moveTo(roomOffset.x + ROOM_SIZE / 2, roomOffset.y - ROOM_SIZE / 2)
+          ctx.lineTo(roomOffset.x + ROOM_SIZE / 2, roomOffset.y + ROOM_SIZE / 2)
+
+          ctx.stroke()
+        }
+
+        if (room.walls.includes('West')) {
+          ctx.beginPath()
+          ctx.moveTo(roomOffset.x - ROOM_SIZE / 2, roomOffset.y - ROOM_SIZE / 2)
+          ctx.lineTo(roomOffset.x - ROOM_SIZE / 2, roomOffset.y + ROOM_SIZE / 2)
+
+          ctx.stroke()
+        }
+      }
+
+      ctx.resetTransform()
+
+      ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2)
+      ctx.fillStyle = '#FF0000'
+      ctx.beginPath()
+      ctx.arc(0, 0, 6, 0, 2 * Math.PI)
+      ctx.fill()
+
+      prevTime = time
+      minimapFrameHandle = window.requestAnimationFrame(minimapFrame)
+    }
+    minimapFrameHandle = window.requestAnimationFrame(minimapFrame)
+
+    return (): void => {
+      window.cancelAnimationFrame(minimapFrameHandle)
+    }
+  }, [])
+
   return (
     <div className={styles.app}>
       <div ref={rendererContainer} className={styles.container}></div>
+
+      <canvas
+        ref={minimapRef}
+        className={styles.minimap}
+        width={580}
+        height={580}
+      />
 
       <LoadingScreen delay={0} loading={loadState < 2} />
     </div>

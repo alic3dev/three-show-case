@@ -1,6 +1,6 @@
 import type { App } from '@/apps/types'
 
-import { BasicCube, displayName as firstDisplayName } from '@/apps/BasicCube'
+import { BasicCube, displayName as firstDisplayName } from '@/apps/BasicCubeApp'
 import {
   RotatingPointLightsApp,
   displayName as secondDisplayName,
@@ -30,6 +30,11 @@ import {
   displayName as eigthDisplayName,
 } from '@/apps/FPRoomGenerationApp'
 import { OceanApp, displayName as ninthDisplayName } from '@/apps/OceanApp'
+import {
+  FPBuildingGenerationApp,
+  displayName as tenthDisplayName,
+} from '@/apps/FPBuildingGenerationApp'
+import { PuzzleApp, displayName as eleventhDisplayName } from '@/apps/PuzzleApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
@@ -41,6 +46,8 @@ export const apps: App[] = [
   { Component: ChunkGenerationApp, displayName: seventhDisplayName },
   { Component: FPRoomGenerationApp, displayName: eigthDisplayName },
   { Component: OceanApp, displayName: ninthDisplayName },
+  { Component: FPBuildingGenerationApp, displayName: tenthDisplayName },
+  { Component: PuzzleApp, displayName: eleventhDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'

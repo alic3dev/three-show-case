@@ -35,3 +35,6 @@ next-env.d.ts
 # turbo
 .turbo
 
+# Blob originals
+public/assets/puzzles/*
+

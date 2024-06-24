@@ -16,7 +16,7 @@ import * as objectUtils from '@/utils/objects'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { Chunk, ChunkManager } from '@/utils/Chunks'
 
-import styles from '@/apps/OceanApp.module.scss'
+import styles from '@/apps/StandardApp.module.scss'
 
 export const displayName: string = 'Ocean'
 

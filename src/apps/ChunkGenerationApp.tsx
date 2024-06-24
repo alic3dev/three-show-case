@@ -12,7 +12,7 @@ import * as objectUtils from '@/utils/objects'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { ChunkManager } from '@/utils/Chunks'
 
-import styles from '@/apps/ChunkGenerationApp.module.scss'
+import styles from '@/apps/StandardApp.module.scss'
 
 export const displayName: string = 'Chunk Generation'
 

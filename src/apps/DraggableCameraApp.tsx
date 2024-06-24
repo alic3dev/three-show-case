@@ -11,7 +11,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/DraggableCameraApp.module.scss'
+import styles from '@/apps/StandardAppWithGrab.module.scss'
 
 export const displayName: string = 'Draggable Camera'
 

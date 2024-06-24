@@ -9,7 +9,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
-import styles from '@/apps/ObjectControlApp.module.scss'
+import styles from '@/apps/StandardApp.module.scss'
 
 export const displayName: string = 'Controlling an Object'
 
