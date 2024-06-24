@@ -30,6 +30,10 @@ import {
   displayName as eigthDisplayName,
 } from '@/apps/FPRoomGenerationApp'
 import { OceanApp, displayName as ninthDisplayName } from '@/apps/OceanApp'
+import {
+  FPBuildingGenerationApp,
+  displayName as tenthDisplayName,
+} from '@/apps/FPBuildingGenerationApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
