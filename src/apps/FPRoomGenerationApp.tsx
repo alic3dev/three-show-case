@@ -9,18 +9,15 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
+import { AmmoHelper } from '@/utils/ammo/AmmoHelper'
+import { EventsManager } from '@/utils/EventsManager'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { generateRoomLayout } from '@/utils/rooms'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { randomColor } from '@/utils/colors'
 
 export const displayName: string = 'First Person Room Generation'
-
-interface WindowOrDocumentEvent {
-  name: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  cb: (...args: any[]) => void
-}
 
 const ROOM_SIZE: number = 30
 
@@ -59,6 +56,9 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
       return
     }
 
+    const eventsManager: EventsManager = new EventsManager()
+    let aborted: boolean = false
+
     if (!renderer.current) {
       renderer.current = new THREE.WebGLRenderer({ antialias: true })
 
@@ -76,14 +76,11 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
     const panel: GUI = new GUI({ autoPlace: true })
 
-    const documentEvents: WindowOrDocumentEvent[] = []
-    const windowEvents: WindowOrDocumentEvent[] = []
-
-    let aborted: boolean = false
-
     if (!rendererProperties.current) {
       window.Ammo().then((Ammo: Ammo.Ammo): void => {
         if (aborted) return
+
+        const ammoHelper: AmmoHelper = new AmmoHelper(Ammo)
 
         const scene: THREE.Scene = new THREE.Scene()
         const camera = new THREE.PerspectiveCamera(
@@ -93,28 +90,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           0.1,
           1000,
         )
-
-        const gravityConstant: number = 7.8
-        const quaternion: THREE.Quaternion = new THREE.Quaternion(0, 0, 0, 1)
-
-        const rigidBodies: THREE.Object3D[] = []
-
-        const collisionConfiguration =
-          new Ammo.btDefaultCollisionConfiguration()
-        const dispatcher = new Ammo.btCollisionDispatcher(
-          collisionConfiguration,
-        )
-        const broadphase = new Ammo.btDbvtBroadphase()
-        const solver = new Ammo.btSequentialImpulseConstraintSolver()
-        const physicsWorld = new Ammo.btDiscreteDynamicsWorld(
-          dispatcher,
-          broadphase,
-          solver,
-          collisionConfiguration,
-        )
-        physicsWorld.setGravity(new Ammo.btVector3(0, -gravityConstant, 0))
-
-        const transformAux1: Ammo.Transform = new Ammo.btTransform()
 
         const axesLines: THREE.Group = new THREE.Group()
         const grid: THREE.Group = new THREE.Group()
@@ -151,7 +126,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
           map: floorDiffuseTexture,
           normalMap: floorNormalTexture,
-          // normalScale: new THREE.Vector2(5, 5),
         })
 
         // const floorWallNormalTexture = new THREE.TextureLoader().load(
@@ -227,10 +201,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           const floorShape: Ammo.BoxShape = new Ammo.btBoxShape(
             new Ammo.btVector3(ROOM_SIZE / 2, 0.5, ROOM_SIZE / 2),
           )
-          const floorBody: Ammo.RigidBody = createRigidBody({
+          const floorBody: Ammo.RigidBody = ammoHelper.createRigidBody({
             object: floorMesh,
             shape: floorShape,
-            addToScene: false,
+
             pos: new THREE.Vector3(
               floorMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
               floorMesh.position.y + -0.5,
@@ -248,15 +222,13 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           )
           ceilingMesh.position.set(0, ROOM_SIZE, 0)
           ceilingMesh.receiveShadow = true
-          // ceilingMesh.castShadow = true
 
           const ceilingShape: Ammo.BoxShape = new Ammo.btBoxShape(
             new Ammo.btVector3(ROOM_SIZE / 2, 0.5, ROOM_SIZE / 2),
           )
-          const ceilingBody: Ammo.RigidBody = createRigidBody({
+          const ceilingBody: Ammo.RigidBody = ammoHelper.createRigidBody({
             object: ceilingMesh,
             shape: ceilingShape,
-            addToScene: false,
             pos: new THREE.Vector3(
               ceilingMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
               ceilingMesh.position.y + -0.5,
@@ -294,20 +266,21 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
                   0.5,
                 ),
               )
-              const northWallUpperBody: Ammo.RigidBody = createRigidBody({
-                object: northWallUpperMesh,
-                shape: northWallUpperShape,
-                addToScene: false,
-                pos: new THREE.Vector3(
-                  northWallUpperMesh.position.x +
-                    roomPosition.x * (ROOM_SIZE / 1),
+              const northWallUpperBody: Ammo.RigidBody =
+                ammoHelper.createRigidBody({
+                  object: northWallUpperMesh,
+                  shape: northWallUpperShape,
 
-                  northWallUpperMesh.position.y,
+                  pos: new THREE.Vector3(
+                    northWallUpperMesh.position.x +
+                      roomPosition.x * (ROOM_SIZE / 1),
 
-                  northWallUpperMesh.position.z +
-                    roomPosition.y * (ROOM_SIZE / 1),
-                ),
-              })
+                    northWallUpperMesh.position.y,
+
+                    northWallUpperMesh.position.z +
+                      roomPosition.y * (ROOM_SIZE / 1),
+                  ),
+                })
               northWallUpperBody.setFriction(0.5)
               northWallUpperBody.setRestitution(1)
 
@@ -332,18 +305,19 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
                   1,
                 ),
               )
-              const northWallWestBody: Ammo.RigidBody = createRigidBody({
-                object: northWallWestMesh,
-                shape: northWallWestShape,
-                addToScene: false,
-                pos: new THREE.Vector3(
-                  northWallWestMesh.position.x +
-                    roomPosition.x * (ROOM_SIZE / 1),
-                  -0.5,
-                  northWallWestMesh.position.z +
-                    roomPosition.y * (ROOM_SIZE / 1),
-                ),
-              })
+              const northWallWestBody: Ammo.RigidBody =
+                ammoHelper.createRigidBody({
+                  object: northWallWestMesh,
+                  shape: northWallWestShape,
+
+                  pos: new THREE.Vector3(
+                    northWallWestMesh.position.x +
+                      roomPosition.x * (ROOM_SIZE / 1),
+                    -0.5,
+                    northWallWestMesh.position.z +
+                      roomPosition.y * (ROOM_SIZE / 1),
+                  ),
+                })
               northWallWestBody.setFriction(0.5)
               northWallWestBody.setRestitution(1)
 
@@ -368,18 +342,19 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
                   1,
                 ),
               )
-              const northWallEastBody: Ammo.RigidBody = createRigidBody({
-                object: northWallEastMesh,
-                shape: northWallEastShape,
-                addToScene: false,
-                pos: new THREE.Vector3(
-                  northWallEastMesh.position.x +
-                    roomPosition.x * (ROOM_SIZE / 1),
-                  -0.5,
-                  northWallEastMesh.position.z +
-                    roomPosition.y * (ROOM_SIZE / 1),
-                ),
-              })
+              const northWallEastBody: Ammo.RigidBody =
+                ammoHelper.createRigidBody({
+                  object: northWallEastMesh,
+                  shape: northWallEastShape,
+
+                  pos: new THREE.Vector3(
+                    northWallEastMesh.position.x +
+                      roomPosition.x * (ROOM_SIZE / 1),
+                    -0.5,
+                    northWallEastMesh.position.z +
+                      roomPosition.y * (ROOM_SIZE / 1),
+                  ),
+                })
               northWallEastBody.setFriction(0.5)
               northWallEastBody.setRestitution(1)
 
@@ -397,10 +372,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             const northWallShape: Ammo.BoxShape = new Ammo.btBoxShape(
               new Ammo.btVector3(ROOM_SIZE / 2, ROOM_SIZE, 1),
             )
-            const northWallBody: Ammo.RigidBody = createRigidBody({
+            const northWallBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: northWallMesh,
               shape: northWallShape,
-              addToScene: false,
+
               pos: new THREE.Vector3(
                 northWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
                 -0.5,
@@ -440,18 +415,19 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
                 1,
               ),
             )
-            const southWallUpperBody: Ammo.RigidBody = createRigidBody({
-              object: southWallUpperMesh,
-              shape: southWallUpperShape,
-              addToScene: false,
-              pos: new THREE.Vector3(
-                southWallUpperMesh.position.x +
-                  roomPosition.x * (ROOM_SIZE / 1),
-                southWallUpperMesh.position.y,
-                southWallUpperMesh.position.z +
-                  roomPosition.y * (ROOM_SIZE / 1),
-              ),
-            })
+            const southWallUpperBody: Ammo.RigidBody =
+              ammoHelper.createRigidBody({
+                object: southWallUpperMesh,
+                shape: southWallUpperShape,
+
+                pos: new THREE.Vector3(
+                  southWallUpperMesh.position.x +
+                    roomPosition.x * (ROOM_SIZE / 1),
+                  southWallUpperMesh.position.y,
+                  southWallUpperMesh.position.z +
+                    roomPosition.y * (ROOM_SIZE / 1),
+                ),
+              })
             southWallUpperBody.setFriction(0.5)
             southWallUpperBody.setRestitution(1)
 
@@ -476,16 +452,19 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
                 0.5,
               ),
             )
-            const southWallWestBody: Ammo.RigidBody = createRigidBody({
-              object: southWallWestMesh,
-              shape: southWallWestShape,
-              addToScene: false,
-              pos: new THREE.Vector3(
-                southWallWestMesh.position.x - roomPosition.x * (ROOM_SIZE / 1),
-                -0.5,
-                southWallWestMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
-              ),
-            })
+            const southWallWestBody: Ammo.RigidBody =
+              ammoHelper.createRigidBody({
+                object: southWallWestMesh,
+                shape: southWallWestShape,
+
+                pos: new THREE.Vector3(
+                  southWallWestMesh.position.x -
+                    roomPosition.x * (ROOM_SIZE / 1),
+                  -0.5,
+                  southWallWestMesh.position.z +
+                    roomPosition.y * (ROOM_SIZE / 1),
+                ),
+              })
             southWallWestBody.setFriction(0.5)
             southWallWestBody.setRestitution(1)
 
@@ -510,16 +489,19 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
                 0.5,
               ),
             )
-            const southWallEastBody: Ammo.RigidBody = createRigidBody({
-              object: southWallEastMesh,
-              shape: southWallEastShape,
-              addToScene: false,
-              pos: new THREE.Vector3(
-                southWallEastMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
-                -0.5,
-                southWallEastMesh.position.z + roomPosition.y * (ROOM_SIZE / 1),
-              ),
-            })
+            const southWallEastBody: Ammo.RigidBody =
+              ammoHelper.createRigidBody({
+                object: southWallEastMesh,
+                shape: southWallEastShape,
+
+                pos: new THREE.Vector3(
+                  southWallEastMesh.position.x +
+                    roomPosition.x * (ROOM_SIZE / 1),
+                  -0.5,
+                  southWallEastMesh.position.z +
+                    roomPosition.y * (ROOM_SIZE / 1),
+                ),
+              })
             southWallEastBody.setFriction(0.5)
             southWallEastBody.setRestitution(1)
 
@@ -536,10 +518,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             const southWallShape: Ammo.BoxShape = new Ammo.btBoxShape(
               new Ammo.btVector3(ROOM_SIZE / 2, ROOM_SIZE / 2, 0.5),
             )
-            const southWallBody: Ammo.RigidBody = createRigidBody({
+            const southWallBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: southWallMesh,
               shape: southWallShape,
-              addToScene: false,
+
               pos: new THREE.Vector3(
                 southWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
                 -0.5,
@@ -569,10 +551,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             const eastWallShape: Ammo.BoxShape = new Ammo.btBoxShape(
               new Ammo.btVector3(0.5, ROOM_SIZE / 2, ROOM_SIZE / 2),
             )
-            const eastWallBody: Ammo.RigidBody = createRigidBody({
+            const eastWallBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: eastWallMesh,
               shape: eastWallShape,
-              addToScene: false,
+
               pos: new THREE.Vector3(
                 eastWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
                 -0.5,
@@ -602,10 +584,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             const westWallShape: Ammo.BoxShape = new Ammo.btBoxShape(
               new Ammo.btVector3(0.5, ROOM_SIZE / 2, ROOM_SIZE / 2),
             )
-            const westWallBody: Ammo.RigidBody = createRigidBody({
+            const westWallBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: westWallMesh,
               shape: westWallShape,
-              addToScene: false,
+
               pos: new THREE.Vector3(
                 westWallMesh.position.x + roomPosition.x * (ROOM_SIZE / 1),
                 -0.5,
@@ -649,11 +631,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             lightStructure.add(lightCone)
 
             const pointLight = new THREE.PointLight(
-              new THREE.Color().set(
-                Math.random() * 0.7 + 0.3,
-                Math.random() * 0.7 + 0.3,
-                Math.random() * 0.7 + 0.3,
-              ),
+              randomColor(),
               ROOM_SIZE * 2,
               ROOM_SIZE * 4,
             )
@@ -676,10 +654,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
               new Ammo.btVector3(0.25, 5, 0.25),
             )
 
-            const lightTubeBody: Ammo.RigidBody = createRigidBody({
+            const lightTubeBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: lightTube,
               shape: lightTubeShape,
-              addToScene: false,
+
               pos: new THREE.Vector3(
                 lightStructure.position.x +
                   lightTube.position.x +
@@ -695,10 +673,9 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
             const lightConeShape = new Ammo.btConeShape(2, 1)
 
-            const lightConeBody: Ammo.RigidBody = createRigidBody({
+            const lightConeBody: Ammo.RigidBody = ammoHelper.createRigidBody({
               object: lightCone,
               shape: lightConeShape,
-              addToScene: false,
               pos: new THREE.Vector3(
                 lightStructure.position.x +
                   lightCone.position.x +
@@ -762,6 +739,13 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         })
 
         const spheres: THREE.Object3D[] = []
+        const sphereQuaternion: THREE.Quaternion = new THREE.Quaternion(
+          0,
+          0,
+          0,
+          1,
+        )
+
         for (let i = 0; i < 100; i++) {
           const x: number = Math.floor(i / 10)
           const z: number = i % 10
@@ -791,11 +775,11 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
           spheres.push(sphere)
 
-          const body: Ammo.RigidBody = createRigidBody({
+          const body: Ammo.RigidBody = ammoHelper.createRigidBody({
             object: sphere,
             shape: sphereShape,
             mass: 1,
-            quaternion,
+            quaternion: sphereQuaternion,
             vel: new THREE.Vector3(
               Math.random() * 10 - 5,
               Math.random() * 10 - 5,
@@ -803,93 +787,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             ),
           })
           body.setRestitution(0.9)
-        }
-
-        function createRigidBody({
-          object,
-          shape,
-          mass = 0,
-          pos,
-          quaternion,
-          vel,
-          angVel,
-          addToScene = true,
-        }: {
-          object: THREE.Object3D
-          shape: Ammo.Shape
-          mass?: number
-          pos?: THREE.Vector3
-          quaternion?: THREE.Quaternion
-          vel?: THREE.Vector3
-          angVel?: THREE.Vector3
-          addToScene?: boolean
-        }) {
-          if (pos) {
-            // object.position.copy(pos)
-          } else {
-            pos = object.position
-          }
-
-          if (quaternion) {
-            object.quaternion.copy(quaternion)
-          } else {
-            quaternion = object.quaternion
-          }
-
-          const transform: Ammo.Transform = new Ammo.btTransform()
-          transform.setIdentity()
-          transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z))
-          transform.setRotation(
-            new Ammo.btQuaternion(
-              quaternion.x,
-              quaternion.y,
-              quaternion.z,
-              quaternion.w,
-            ),
-          )
-          const motionState: Ammo.MotionState = new Ammo.btDefaultMotionState(
-            transform,
-          )
-
-          const localInertia: Ammo.Vector3 = new Ammo.btVector3(0, 0, 0)
-          shape.calculateLocalInertia(mass, localInertia)
-
-          const rbInfo: Ammo.RigidBodyConstructionInfo =
-            new Ammo.btRigidBodyConstructionInfo(
-              mass,
-              motionState,
-              shape,
-              localInertia,
-            )
-
-          const body: Ammo.RigidBody = new Ammo.btRigidBody(rbInfo)
-          body.setFriction(0.5)
-
-          if (vel) {
-            body.setLinearVelocity(new Ammo.btVector3(vel.x, vel.y, vel.z))
-          }
-
-          if (angVel) {
-            body.setAngularVelocity(
-              new Ammo.btVector3(angVel.x, angVel.y, angVel.z),
-            )
-          }
-
-          object.userData.physicsBody = body
-          object.userData.collided = false
-
-          if (addToScene) scene.add(object)
-
-          if (mass > 0) {
-            rigidBodies.push(object)
-
-            // Disable deactivation
-            body.setActivationState(4)
-          }
-
-          physicsWorld.addRigidBody(body)
-
-          return body
         }
 
         const playerObject: THREE.Group = new THREE.Group()
@@ -915,7 +812,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           new Ammo.btVector3(1 / 2, 3, 1 / 2),
         )
 
-        const playerBody: Ammo.RigidBody = createRigidBody({
+        const playerBody: Ammo.RigidBody = ammoHelper.createRigidBody({
           object: playerObject,
           shape: playerShape,
           mass: 100,
@@ -924,6 +821,8 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         playerBody.setRestitution(0)
         playerBody.setAngularFactor(0, 0, 0)
         playerObject.position.set(ROOM_SIZE / 4, 0, ROOM_SIZE / 4)
+
+        scene.add(playerObject)
 
         rendererProperties.current = {
           scene,
@@ -993,26 +892,24 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             rendererContainer.current!.clientHeight,
           )
         }
-        window.addEventListener('resize', onResize)
-        windowEvents.push({ name: 'resize', cb: onResize })
+        eventsManager.addWindowEvent('resize', onResize)
 
         const heldKeys: Record<string, boolean> = {}
 
         const onKeyup: (ev: KeyboardEvent) => void = (
           ev: KeyboardEvent,
         ): void => {
-          heldKeys[ev.key] = false
+          heldKeys[ev.key.toLowerCase()] = false
           heldKeys[ev.code] = false
         }
-        window.addEventListener('keyup', onKeyup)
-        windowEvents.push({ name: 'keyup', cb: onKeyup })
+        eventsManager.addWindowEvent('keyup', onKeyup)
 
         const onKeydown: (ev: KeyboardEvent) => void = (
           ev: KeyboardEvent,
         ): void => {
-          if (heldKeys[ev.key] || heldKeys[ev.code]) return
+          if (heldKeys[ev.key.toLowerCase()] || heldKeys[ev.code]) return
 
-          switch (ev.key) {
+          switch (ev.key.toLowerCase()) {
             case 'f':
               renderer.current?.domElement.requestFullscreen({
                 navigationUI: 'hide',
@@ -1039,11 +936,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
               break
           }
 
-          heldKeys[ev.key] = true
+          heldKeys[ev.key.toLowerCase()] = true
           heldKeys[ev.code] = true
         }
-        window.addEventListener('keydown', onKeydown)
-        windowEvents.push({ name: 'keydown', cb: onKeydown })
+        eventsManager.addWindowEvent('keydown', onKeydown)
 
         const MAX_CAMERA_SPEED: number = 0.3
 
@@ -1053,13 +949,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           if (!player.current?.mouseLocked) return
 
           if (ev.movementX !== 0) {
-            // playerObject.rotateY(
-            //   -Math.max(
-            //     Math.min(ev.movementX / 750, MAX_CAMERA_SPEED),
-            //     -MAX_CAMERA_SPEED,
-            //   ),
-            // )
-
             playerBody.setAngularVelocity(
               new Ammo.btVector3(
                 0,
@@ -1075,7 +964,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
             clearTimeout(timeoutHandle)
 
-            timeoutHandle = setTimeout(() => {
+            timeoutHandle = setTimeout((): void => {
               playerBody.setAngularVelocity(new Ammo.btVector3(0, 0, 0))
             }, (1 / 60) * 1000)
           }
@@ -1089,8 +978,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             )
           }
         }
-        window.addEventListener('pointermove', onPointerMove)
-        windowEvents.push({ name: 'pointermove', cb: onPointerMove })
+        eventsManager.addWindowEvent('pointermove', onPointerMove)
 
         const lockChangeAlert = (): void => {
           if (document.pointerLockElement === renderer.current?.domElement) {
@@ -1099,8 +987,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
             player.current!.mouseLocked = false
           }
         }
-        document.addEventListener('pointerlockchange', lockChangeAlert)
-        documentEvents.push({ name: 'pointerlockchange', cb: lockChangeAlert })
+        eventsManager.addDocumentEvent('pointerlockchange', lockChangeAlert)
 
         const onMouseDown = (): void => {
           const pointerLockPromise =
@@ -1115,45 +1002,12 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
           rendererContainer.current?.classList.add(styles.grabbing)
         }
-        window.addEventListener('mousedown', onMouseDown)
-        windowEvents.push({ name: 'mousedown', cb: onMouseDown })
+        eventsManager.addWindowEvent('mousedown', onMouseDown)
 
         const onMouseUp = (): void => {
           rendererContainer.current?.classList.remove(styles.grabbing)
         }
-        window.addEventListener('mouseup', onMouseUp)
-        windowEvents.push({ name: 'mouseup', cb: onMouseUp })
-
-        function updatePhysics(deltaTime: DOMHighResTimeStamp) {
-          // const staticAngularVelocity = new Ammo.btVector3(
-          //   0,
-          //   playerBody.getAngularVelocity().y(),
-          //   0,
-          // )
-          // playerBody.setAngularVelocity(staticAngularVelocity)
-
-          // Step world
-          physicsWorld.stepSimulation(deltaTime, 10)
-
-          // playerBody.setAngularVelocity(staticAngularVelocity)
-
-          // Update rigid bodies
-          for (let i: number = 0; i < rigidBodies.length; i++) {
-            const objThree: THREE.Object3D = rigidBodies[i]
-            const objPhys: Ammo.RigidBody = objThree.userData.physicsBody
-            const ms: Ammo.MotionState = objPhys.getMotionState()
-
-            if (ms) {
-              ms.getWorldTransform(transformAux1)
-              const p: Ammo.Vector3 = transformAux1.getOrigin()
-              const q: Ammo.Quaternion = transformAux1.getRotation()
-              objThree.position.set(p.x(), p.y(), p.z())
-              objThree.quaternion.set(q.x(), q.y(), q.z(), q.w())
-
-              objThree.userData.collided = false
-            }
-          }
-        }
+        eventsManager.addWindowEvent('mouseup', onMouseUp)
 
         const MOVEMENT_SPEED: number = 0.2
 
@@ -1208,8 +1062,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           )
           player.current!.body.setCenterOfMassTransform(transform)
 
-          const deltaTime: number = clock.getDelta()
-          updatePhysics(deltaTime)
+          ammoHelper.step(clock.getDelta())
 
           renderer.current!.render(
             rendererProperties.current!.scene,
@@ -1227,13 +1080,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
-      for (const event of documentEvents) {
-        document.removeEventListener(event.name, event.cb)
-      }
-
-      for (const event of windowEvents) {
-        window.removeEventListener(event.name, event.cb)
-      }
+      eventsManager.removeAllEvents()
     }
   }, [])
 
