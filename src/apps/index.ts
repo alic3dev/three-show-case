@@ -34,6 +34,7 @@ import {
   FPBuildingGenerationApp,
   displayName as tenthDisplayName,
 } from '@/apps/FPBuildingGenerationApp'
+import { PuzzleApp, displayName as eleventhDisplayName } from '@/apps/PuzzleApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
@@ -45,6 +46,8 @@ export const apps: App[] = [
   { Component: ChunkGenerationApp, displayName: seventhDisplayName },
   { Component: FPRoomGenerationApp, displayName: eigthDisplayName },
   { Component: OceanApp, displayName: ninthDisplayName },
+  { Component: FPBuildingGenerationApp, displayName: tenthDisplayName },
+  { Component: PuzzleApp, displayName: eleventhDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'
