@@ -1,4 +1,10 @@
 import path from 'path'
+import dotenv from 'dotenv'
+
+dotenv.config({
+  override: true,
+  path: path.resolve(process.cwd(), '.env.local'),
+})
 
 import 'module-alias/register'
 import { addAliases } from 'module-alias'
