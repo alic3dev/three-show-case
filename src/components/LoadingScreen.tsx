@@ -6,30 +6,13 @@ export function LoadingScreen({
   loading = false,
   delay = 250,
   children,
-}: React.PropsWithChildren<{ loading?: boolean; delay?: number }>) {
-  // const [ellipsesCount, setEllipsesCount] = React.useState<number>(0)
-
-  // React.useEffect((): void | (() => void) => {
-  //   if (!loading) return
-
-  //   const interval: number = window.setInterval((): void => {
-  //     setEllipsesCount((prevEllipsesCount: number): number => {
-  //       if (prevEllipsesCount >= 3) {
-  //         return 0
-  //       }
-
-  //       return prevEllipsesCount + 1
-  //     })
-  //   }, 1000)
-
-  //   return (): void => {
-  //     window.clearInterval(interval)
-  //   }
-  // }, [loading])
-
+}: React.PropsWithChildren<{
+  loading?: boolean
+  delay?: number
+}>): React.ReactElement {
   const [ready, setReady] = React.useState<boolean>(delay === 0)
 
-  React.useEffect((): void | (() => void) => {
+  React.useEffect((): (() => void) => {
     const timeout: number = window.setTimeout((): void => {
       setReady(true)
     }, delay)

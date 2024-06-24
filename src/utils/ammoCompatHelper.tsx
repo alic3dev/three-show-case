@@ -8,9 +8,9 @@ export const addAmoLoaderToWindow = (): void => {
   if (Object.prototype.hasOwnProperty.call(window, 'Ammo')) return
 
   window.Ammo = (): Promise<Ammo.Ammo> =>
-    new Promise<Ammo.Ammo>((resolve): void => {
+    new Promise<Ammo.Ammo>((resolve: (value: Ammo.Ammo) => void): void => {
       import('ammo.js')
-        .then((a): unknown => a.default())
-        .then((c: unknown): void => resolve(c as Ammo.Ammo))
+        .then((a: { default: () => Ammo.Ammo }): Ammo.Ammo => a.default())
+        .then((c: Ammo.Ammo): void => resolve(c))
     })
 }
