@@ -1,6 +1,6 @@
 import type { App } from '@/apps/types'
 
-import { BasicCube, displayName as firstDisplayName } from '@/apps/BasicCube'
+import { BasicCube, displayName as firstDisplayName } from '@/apps/BasicCubeApp'
 import {
   RotatingPointLightsApp,
   displayName as secondDisplayName,
