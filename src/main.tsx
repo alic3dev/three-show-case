@@ -4,7 +4,7 @@ import type { App as AppType } from '@/apps/types'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, redirect, RouterProvider } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 
 import { apps, NavigationApp } from '@/apps/index.ts'
@@ -36,9 +36,8 @@ const router = createBrowserRouter([
   ),
   {
     path: '*',
-    Component: (): React.ReactElement => {
-      window.location.href = '/'
-      return <></>
+    loader: async (): Promise<Response> => {
+      return redirect('/')
     },
   },
 ])
