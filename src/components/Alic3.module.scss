@@ -23,7 +23,7 @@
   }
 
   &.header {
-    position: fixed;
+    position: absolute;
     top: 5px;
     left: 30px;
   }
@@ -43,17 +43,13 @@
   &:focus,
   &:hover {
     text-decoration: none;
-    color: #eaefff;
+    color: var(--color-text);
   }
 
   &:hover,
   &:focus,
   &:active {
     opacity: 1;
-
-    // .title-secondary {
-    //   opacity: 1;
-    // }
   }
 }
 
@@ -89,7 +85,7 @@
 .title-main-part {
   position: absolute;
   left: 0px;
-  bottom: 7.5px;
+  bottom: 5px;
 }
 
 .title-main-start {

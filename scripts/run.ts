@@ -6,6 +6,11 @@ dotenv.config({
   path: path.resolve(process.cwd(), '.env.local'),
 })
 
+dotenv.config({
+  override: true,
+  path: path.resolve(process.cwd(), '.env.aws'),
+})
+
 import 'module-alias/register'
 import { addAliases } from 'module-alias'
 

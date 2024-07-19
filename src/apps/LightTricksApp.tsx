@@ -4,7 +4,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
@@ -12,6 +12,7 @@ import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 
 import styles from '@/apps/StandardAppWithGrab.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Light Tricks'
 
@@ -335,19 +336,30 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
       rendererProperties.current!.objects.yLine.visible = false
       rendererProperties.current!.objects.zLine.visible = false
     }
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+        rendererProperties.current.camera.aspect =
+          rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight
+        rendererProperties.current.camera.updateProjectionMatrix()
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        if (!renderer.current) return
+
+        renderer.current.setSize(
+          rendererContainer.current.clientWidth,
+          rendererContainer.current.clientHeight,
+        )
+      }, 0)
     }
-    window.addEventListener('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
+
+    const eventsManager: EventsManager = new EventsManager()
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -355,7 +367,7 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = false
       heldKeys[ev.code] = false
     }
-    window.addEventListener('keyup', onKeyup)
+    eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
@@ -391,17 +403,17 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = true
       heldKeys[ev.code] = true
     }
-    window.addEventListener('keydown', onKeydown)
+    eventsManager.addWindowEvent('keydown', onKeydown)
 
     const onMouseDown = (): void => {
       rendererContainer.current?.classList.add(styles.grabbing)
     }
-    window.addEventListener('mousedown', onMouseDown)
+    eventsManager.addWindowEvent('mousedown', onMouseDown)
 
     const onMouseUp = (): void => {
       rendererContainer.current?.classList.remove(styles.grabbing)
     }
-    window.addEventListener('mouseup', onMouseUp)
+    eventsManager.addWindowEvent('mouseup', onMouseUp)
 
     const point: THREE.Vector3 = new THREE.Vector3(0, 5, 0)
     const xAxis: THREE.Vector3 = new THREE.Vector3(1, 0, 0)
@@ -477,13 +489,8 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
-      window.removeEventListener('resize', onResize)
-
-      window.removeEventListener('keydown', onKeydown)
-      window.removeEventListener('keyup', onKeyup)
-
-      window.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
+      resizeObserver.disconnect()
+      eventsManager.removeAllEvents()
     }
   }, [])
 

@@ -4,13 +4,14 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
 import styles from '@/apps/StandardAppWithGrab.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Bouncing Physics'
 
@@ -58,12 +59,6 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
     }
 
     const panel: GUI = new GUI({ autoPlace: true })
-    const events: {
-      name: string
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      cb: (...args: any[]) => void
-    }[] = []
-
     let aborted: boolean = false
 
     if (!rendererProperties.current) {
@@ -441,80 +436,6 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
         rendererProperties.current!.objects.yLine.visible = false
         rendererProperties.current!.objects.zLine.visible = false
 
-        const onResize: (ev: UIEvent) => void = (): void => {
-          rendererProperties.current!.camera.aspect =
-            rendererContainer.current!.clientWidth /
-            rendererContainer.current!.clientHeight
-          rendererProperties.current!.camera.updateProjectionMatrix()
-
-          renderer.current?.setSize(
-            rendererContainer.current!.clientWidth,
-            rendererContainer.current!.clientHeight,
-          )
-        }
-        window.addEventListener('resize', onResize)
-        events.push({ name: 'resize', cb: onResize })
-
-        const heldKeys: Record<string, boolean> = {}
-
-        const onKeyup: (ev: KeyboardEvent) => void = (
-          ev: KeyboardEvent,
-        ): void => {
-          heldKeys[ev.key] = false
-          heldKeys[ev.code] = false
-        }
-        window.addEventListener('keyup', onKeyup)
-        events.push({ name: 'keyup', cb: onKeyup })
-
-        const onKeydown: (ev: KeyboardEvent) => void = (
-          ev: KeyboardEvent,
-        ): void => {
-          if (heldKeys[ev.key] || heldKeys[ev.code]) return
-
-          switch (ev.key) {
-            case 's':
-              rendererProperties.current?.stats.showPanel(
-                ++statsPanel.current.value % 4,
-              )
-              window.localStorage.setItem(
-                LOCAL_STORAGE_KEYS.statsPanel,
-                JSON.stringify(statsPanel.current.value % 4),
-              )
-              break
-            case 'g':
-              rendererProperties.current!.objects.grid.visible =
-                !rendererProperties.current!.objects.grid.visible
-              break
-            case 'l':
-              rendererProperties.current!.objects.xLine.visible =
-                !rendererProperties.current!.objects.xLine.visible
-              rendererProperties.current!.objects.yLine.visible =
-                !rendererProperties.current!.objects.yLine.visible
-              rendererProperties.current!.objects.zLine.visible =
-                !rendererProperties.current!.objects.zLine.visible
-              break
-            default:
-              break
-          }
-
-          heldKeys[ev.key] = true
-          heldKeys[ev.code] = true
-        }
-        window.addEventListener('keydown', onKeydown)
-        events.push({ name: 'keydown', cb: onKeydown })
-
-        const onMouseDown = (): void => {
-          rendererContainer.current?.classList.add(styles.grabbing)
-        }
-        window.addEventListener('mousedown', onMouseDown)
-        events.push({ name: 'mousedown', cb: onMouseDown })
-
-        const onMouseUp = (): void => {
-          rendererContainer.current?.classList.remove(styles.grabbing)
-        }
-        window.addEventListener('mouseup', onMouseUp)
-        events.push({ name: 'mouseup', cb: onMouseUp })
-
         function updatePhysics(deltaTime: DOMHighResTimeStamp) {
           // Step world
           physicsWorld.stepSimulation(deltaTime, 10)
@@ -553,6 +474,85 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
       })
     }
 
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
+
+        rendererProperties.current!.camera.aspect =
+          rendererContainer.current!.clientWidth /
+          rendererContainer.current!.clientHeight
+        rendererProperties.current!.camera.updateProjectionMatrix()
+
+        if (!renderer.current) return
+
+        renderer.current?.setSize(
+          rendererContainer.current!.clientWidth,
+          rendererContainer.current!.clientHeight,
+        )
+      }, 0)
+    }
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
+
+    const eventsManager: EventsManager = new EventsManager()
+
+    const heldKeys: Record<string, boolean> = {}
+
+    const onKeyup: (ev: KeyboardEvent) => void = (ev: KeyboardEvent): void => {
+      heldKeys[ev.key] = false
+      heldKeys[ev.code] = false
+    }
+    eventsManager.addWindowEvent('keyup', onKeyup)
+
+    const onKeydown: (ev: KeyboardEvent) => void = (
+      ev: KeyboardEvent,
+    ): void => {
+      if (heldKeys[ev.key] || heldKeys[ev.code]) return
+
+      switch (ev.key) {
+        case 's':
+          rendererProperties.current?.stats.showPanel(
+            ++statsPanel.current.value % 4,
+          )
+          window.localStorage.setItem(
+            LOCAL_STORAGE_KEYS.statsPanel,
+            JSON.stringify(statsPanel.current.value % 4),
+          )
+          break
+        case 'g':
+          rendererProperties.current!.objects.grid.visible =
+            !rendererProperties.current!.objects.grid.visible
+          break
+        case 'l':
+          rendererProperties.current!.objects.xLine.visible =
+            !rendererProperties.current!.objects.xLine.visible
+          rendererProperties.current!.objects.yLine.visible =
+            !rendererProperties.current!.objects.yLine.visible
+          rendererProperties.current!.objects.zLine.visible =
+            !rendererProperties.current!.objects.zLine.visible
+          break
+        default:
+          break
+      }
+
+      heldKeys[ev.key] = true
+      heldKeys[ev.code] = true
+    }
+    eventsManager.addWindowEvent('keydown', onKeydown)
+
+    const onMouseDown = (): void => {
+      rendererContainer.current?.classList.add(styles.grabbing)
+    }
+    eventsManager.addWindowEvent('mousedown', onMouseDown)
+
+    const onMouseUp = (): void => {
+      rendererContainer.current?.classList.remove(styles.grabbing)
+    }
+    eventsManager.addWindowEvent('mouseup', onMouseUp)
+
     return (): void => {
       aborted = true
 
@@ -560,9 +560,8 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
-      for (const event of events) {
-        window.removeEventListener(event.name, event.cb)
-      }
+      resizeObserver.disconnect()
+      eventsManager.removeAllEvents()
     }
   }, [])
 

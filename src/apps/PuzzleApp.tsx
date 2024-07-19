@@ -59,7 +59,9 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
 
     const dragY: number = -3.75
 
-    const eventsManager: EventsManager = new EventsManager()
+    const eventsManager: EventsManager = new EventsManager(
+      rendererContainer.current,
+    )
 
     if (!renderer.current) {
       renderer.current = new THREE.WebGLRenderer({ antialias: true })
@@ -134,7 +136,6 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
         ].url
 
       new THREE.TextureLoader().load(
-        // '/assets/puzzles/12yuoy7p8sr21.png',
         puzzleImageURL,
         (texture: THREE.Texture): void => {
           const textureSize: THREE.Vector2 = new THREE.Vector2(
@@ -437,10 +438,13 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
     let draggedObject: THREE.Object3D | null = null
 
     const onPointerMove = (event: PointerEvent): void => {
-      pointer.x = (event.clientX / window.innerWidth) * 2 - 1
-      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1
+      if (!rendererContainer.current) return
+
+      pointer.x = (event.layerX / rendererContainer.current.clientWidth) * 2 - 1
+      pointer.y =
+        -(event.layerY / rendererContainer.current.clientHeight) * 2 + 1
     }
-    eventsManager.addWindowEvent('pointermove', onPointerMove)
+    eventsManager.addContainerEvent('pointermove', onPointerMove)
 
     const onMouseDown = (event: MouseEvent): void => {
       if (!selectedObject || event.shiftKey) return
@@ -452,7 +456,7 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
       draggedObject = selectedObject
       draggedObject.position.y = dragY
     }
-    eventsManager.addWindowEvent('mousedown', onMouseDown)
+    eventsManager.addContainerEvent('mousedown', onMouseDown)
 
     const onMouseUp = (): void => {
       if (!draggedObject) return
@@ -460,25 +464,35 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
       draggedObject.position.y = -4
       draggedObject = null
     }
-    eventsManager.addWindowEvent('mouseup', onMouseUp)
+    eventsManager.addContainerEvent('mouseup', onMouseUp)
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        rendererProperties.current.camera.aspect =
+          rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight
+        rendererProperties.current.camera.updateProjectionMatrix()
 
-      rendererProperties.current?.composer.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        if (!renderer.current) return
+
+        renderer.current.setSize(
+          rendererContainer.current.clientWidth,
+          rendererContainer.current.clientHeight,
+        )
+
+        rendererProperties.current?.composer.setSize(
+          rendererContainer.current!.clientWidth,
+          rendererContainer.current!.clientHeight,
+        )
+      }, 0)
     }
-    eventsManager.addWindowEvent('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -564,6 +578,7 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
     return (): void => {
       renderer.current!.setAnimationLoop(null)
 
+      resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
   }, [statsRef])

@@ -35,6 +35,16 @@ import {
   displayName as tenthDisplayName,
 } from '@/apps/FPBuildingGenerationApp'
 import { PuzzleApp, displayName as eleventhDisplayName } from '@/apps/PuzzleApp'
+import { WalkApp, displayName as twelththDisplayName } from '@/apps/WalkApp'
+import { FluidApp, displayName as thirteenthDisplayName } from '@/apps/FluidApp'
+import {
+  FaceDetectionApp,
+  displayName as fourteenthDisplayName,
+} from '@/apps/FaceDetectionApp'
+import {
+  HouseApp,
+  displayName as fifthteenthDisplayName,
+} from '@/apps/HouseApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
@@ -48,6 +58,10 @@ export const apps: App[] = [
   { Component: OceanApp, displayName: ninthDisplayName },
   { Component: FPBuildingGenerationApp, displayName: tenthDisplayName },
   { Component: PuzzleApp, displayName: eleventhDisplayName },
+  { Component: WalkApp, displayName: twelththDisplayName },
+  { Component: FluidApp, displayName: thirteenthDisplayName },
+  { Component: FaceDetectionApp, displayName: fourteenthDisplayName },
+  { Component: HouseApp, displayName: fifthteenthDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'

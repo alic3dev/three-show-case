@@ -1,17 +1,25 @@
 .app {
-  height: 100%;
+  width: max-content;
+
+  margin: auto;
+
+  padding: 2rem 4rem;
+
+  background: var(--color-base);
+
+  border-radius: var(--border-radius-item);
+
+  box-shadow: var(--box-shadow-item);
 }
 
 .title {
-  padding-top: 8rem;
-
-  margin-top: 0;
-  margin-bottom: 0;
+  margin: 0;
 
   text-align: center;
 }
 .sub-title {
-  margin-bottom: 4rem;
+  margin: 0;
+  margin-bottom: 2rem;
 
   text-align: center;
 }
@@ -20,12 +28,18 @@
   font-size: 1rem;
 }
 
-.examples {
-  width: max-content;
-  margin: auto;
-  padding-left: 1.2rem;
-}
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-.example {
-  width: max-content;
+  margin-top: 1rem;
+
+  & > *:first-child {
+    margin-right: 0.5rem;
+  }
+
+  &:last-child > *:first-child {
+    color: var(--color-red);
+  }
 }

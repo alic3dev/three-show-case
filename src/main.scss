@@ -1,3 +1,84 @@
+@import '@catppuccin/palette/style';
+
+@mixin set-color($flavor, $color) {
+  --color-#{$color}: var(--ctp-#{$flavor}-#{$color});
+  --color-#{$color}-rgb: var(--ctp-#{$flavor}-#{$color}-rgb);
+  --color-#{$color}-hsl: var(--ctp-#{$flavor}-#{$color}-hsl);
+  --color-#{$color}-raw: var(--ctp-#{$flavor}-#{$color}-raw);
+}
+
+@mixin set-flavor-colors($flavor) {
+  @include set-color($flavor, 'rosewater');
+  @include set-color($flavor, 'flamingo');
+  @include set-color($flavor, 'pink');
+  @include set-color($flavor, 'mauve');
+  @include set-color($flavor, 'red');
+  @include set-color($flavor, 'maroon');
+  @include set-color($flavor, 'peach');
+  @include set-color($flavor, 'yellow');
+  @include set-color($flavor, 'green');
+  @include set-color($flavor, 'teal');
+  @include set-color($flavor, 'sky');
+  @include set-color($flavor, 'sapphire');
+  @include set-color($flavor, 'blue');
+  @include set-color($flavor, 'lavender');
+  @include set-color($flavor, 'text');
+  @include set-color($flavor, 'subtext1');
+  @include set-color($flavor, 'subtext0');
+  @include set-color($flavor, 'overlay2');
+  @include set-color($flavor, 'overlay1');
+  @include set-color($flavor, 'overlay0');
+  @include set-color($flavor, 'surface2');
+  @include set-color($flavor, 'surface1');
+  @include set-color($flavor, 'surface0');
+  @include set-color($flavor, 'crust');
+  @include set-color($flavor, 'mantle');
+  @include set-color($flavor, 'base');
+}
+
+:root {
+  --color-white: #ffffff;
+  --color-white-rgb: rgb(255, 255, 255);
+  --color-white-hsl: hsl(0, 0%, 100%);
+  --color-white-raw: 255, 255, 255;
+
+  --color-black: #000000;
+  --color-black-rgb: rgb(0, 0, 0);
+  --color-black-hsl: hsl(0, 0%, 0%);
+  --color-black-raw: 0, 0, 0;
+
+  --color-primary-red: #ff0000;
+  --color-primary-red-rgb: rgb(255, 0, 0);
+  --color-primary-red-hsl: hsl(0, 100%, 50%);
+  --color-primary-red-raw: 255, 0, 0;
+
+  --color-primary-green: #00ff00;
+  --color-primary-green-rgb: rgb(0, 255, 0);
+  --color-primary-green-hsl: hsl(120, 100%, 50%);
+  --color-primary-green-raw: 0, 255, 0;
+
+  --color-primary-blue: #0000ff;
+  --color-primary-blue-rgb: rgb(0, 0, 255);
+  --color-primary-blue-hsl: hsl(240, 100%, 50%);
+  --color-primary-blue-raw: 0, 0, 255;
+
+  @media (prefers-color-scheme: light) {
+    @include set-flavor-colors('latte');
+  }
+
+  @media (prefers-color-scheme: dark) {
+    @include set-flavor-colors('frappe');
+  }
+
+  --box-shadow-item: 0px 2px 4px rgba(var(--color-black-raw), 0.3);
+  --box-shadow-item-light: 0px 2px 4px rgba(var(--color-black-raw), 0.05);
+  --box-shadow-item-inverted: 0px -2px 4px rgba(var(--color-black-raw), 0.3);
+  --box-shadow-item-light-inverted: 0px -2px 4px rgba(var(--color-black-raw), 0.05);
+
+  --border-radius-item: 10px;
+  --border-radius-item-half: 5px;
+}
+
 :root,
 html,
 body {
@@ -12,13 +93,21 @@ body {
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--color-text);
+  background-color: var(--color-crust);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  overflow: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 #root {
@@ -32,11 +121,13 @@ body {
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--color-blue);
   text-decoration: inherit;
+
+  transition: color 125ms ease-in-out;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--color-sky);
 }
 
 h1 {
@@ -51,27 +142,14 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--color-blue);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--color-sky);
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
 }

@@ -23,6 +23,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env*.aws
 .env*.local
 
 # vercel
@@ -38,3 +40,10 @@ next-env.d.ts
 # Blob originals
 public/assets/puzzles/*
 
+# Symbolic linked node_modules
+public/assets/face_mesh/*
+
+# S3 Backed Assets
+public/assets/*
+!public/assets/face_mesh
+scripts/data/cf.json

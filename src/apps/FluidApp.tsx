@@ -5,13 +5,13 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { Water } from 'three/addons/objects/Water.js'
 import { Sky } from 'three/addons/objects/Sky.js'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
-import { Stats } from '@/utils/stats'
 import * as objectUtils from '@/utils/objects'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { Chunk, ChunkManager } from '@/utils/Chunks'
@@ -20,7 +20,7 @@ import styles from '@/apps/StandardApp.module.scss'
 import { EventsManager } from '@/utils/EventsManager'
 import { resolveAsset } from '@/utils/resolveAsset'
 
-export const displayName: string = 'Ocean'
+export const displayName: string = '🩸'
 
 function generateChunkMethod(
   location: THREE.Vector3,
@@ -47,46 +47,6 @@ function generateChunkMethod(
     mshFloor.receiveShadow = true
 
     objects.add(mshFloor)
-
-    const structures = []
-    const numberOfStructures: number = Math.floor(Math.random() * 25 + 25)
-
-    for (let i: number = 0; i < numberOfStructures; i++) {
-      const isTall = Math.random() > 0.95
-
-      const widthDepth = Math.random() * 4 + (isTall ? 6 : 2)
-      const height = isTall ? Math.random() * 12 + 24 : Math.random() * 12 + 2
-
-      const structureGeometry = new THREE.BoxGeometry(
-        widthDepth,
-        height,
-        widthDepth,
-      )
-
-      const structure = new THREE.Mesh(
-        structureGeometry,
-        options.structureMaterial,
-      )
-
-      do {
-        structure.position.set(
-          Math.random() * options.CHUNK_SIZE - 50,
-          height / 2,
-          Math.random() * options.CHUNK_SIZE - 50,
-        )
-      } while (
-        structure.position.x + widthDepth / 2 < 10 &&
-        structure.position.x - widthDepth / 2 > -10
-      )
-      structure.rotateY(Math.random() * Math.PI * 2)
-
-      structure.castShadow = true
-      structure.receiveShadow = true
-
-      structures.push(structure)
-    }
-
-    objects.add(...structures)
   }
 
   objects.position.add(positionOffset)
@@ -94,22 +54,7 @@ function generateChunkMethod(
   return new Chunk({ location, objects })
 }
 
-export const OceanApp: AppComponent = (): React.ReactElement => {
-  // const settings = React.useRef<{
-  //   rotation: {
-  //     speed: number
-  //   }
-  //   lights: {
-  //     intensity: number
-  //   }
-  // }>({
-  //   rotation: {
-  //     speed: 0.01,
-  //   },
-  //   lights: {
-  //     intensity: 25,
-  //   },
-  // })
+export const FluidApp: AppComponent = (): React.ReactElement => {
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
@@ -172,7 +117,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
         2000,
       )
       camera.position.set(0, 4, 0)
-      camera.lookAt(0, 4, -300)
+      camera.lookAt(0, 0, -300)
 
       const chunkManager: ChunkManager = new ChunkManager({
         scene,
@@ -183,11 +128,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
         generateChunkMethod,
       })
 
-      scene.fog = new THREE.Fog(
-        0x1f1d16,
-        1,
-        chunkManager.options.CHUNK_SIZE * 2,
-      )
+      scene.fog = new THREE.Fog(0x0, 1, chunkManager.options.CHUNK_SIZE * 2)
 
       const axesLines: THREE.AxesHelper =
         objectUtils.axesLines.createAxesLines()
@@ -198,13 +139,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
         0xfdc371,
         1,
       )
-      scene.add(ambientLight)
-
-      // 0x585857
-      // 0x3d363f
-
-      const hemiLight = new THREE.HemisphereLight(0x3f3d36, 0x404040, 1)
-      scene.add(hemiLight)
 
       const spotLight = new THREE.SpotLight(
         0xfdc371,
@@ -214,41 +148,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
         1,
         0.05,
       )
-      spotLight.position.set(0, 50, -200)
-      spotLight.target.position.set(0, 0, 0)
-
-      spotLight.castShadow = true
-      spotLight.shadow.mapSize.width = 8192 / 8
-      spotLight.shadow.mapSize.height = spotLight.shadow.mapSize.width
-      spotLight.shadow.radius = 2
-
-      scene.add(spotLight)
-      scene.add(spotLight.target)
-
-      // camera.add(spotLight) //, spotLight.target)
-
-      // const dirLight = new THREE.DirectionalLight(0xfdc371, 100)
-      // dirLight.position.set(0, 7, -100)
-      // dirLight.target.position.set(0, 0, 100)
-
-      // dirLight.castShadow = true
-      // dirLight.shadow.mapSize.width = 8192 / 8
-      // dirLight.shadow.mapSize.height = dirLight.shadow.mapSize.width
-      // dirLight.shadow.radius = 2
-      // dirLight.shadow.camera.left = -1000
-      // dirLight.shadow.camera.right = 1000
-      // dirLight.shadow.camera.top = 1000
-      // dirLight.shadow.camera.bottom = -1000
-
-      // camera.add(dirLight)
-
-      // scene.add(dirLight)
-      // scene.add(dirLight.target)
-
-      // const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 5)
-      // scene.add(dirLightHelper)
-
-      // camera.add(dirLightHelper)
 
       const sunLight = spotLight
 
@@ -257,7 +156,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
 
       const sunPosition = new THREE.Vector3().setFromSphericalCoords(
         1,
-        THREE.MathUtils.degToRad(90),
+        THREE.MathUtils.degToRad(180),
         THREE.MathUtils.degToRad(180),
       )
       sky.material.uniforms.sunPosition.value = sunPosition
@@ -277,20 +176,17 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
             setLoadState((prevLoadState: number): number => prevLoadState + 1)
           },
         ),
-        sunDirection: new THREE.Vector3(0, 1, -20),
-        sunColor: 0xfdc371,
-        waterColor: 0x001e0f,
+        sunDirection: new THREE.Vector3(0, 20, -200),
+        sunColor: 0x330000,
+        waterColor: 0xf01e0f,
         distortionScale: 2,
         fog: scene.fog !== undefined,
       })
 
-      water.material.uniforms.size.value = 2
+      water.material.uniforms.size.value = 4
 
       water.rotation.x = -Math.PI / 2
       water.position.setY(0.6)
-
-      // water.receiveShadow = true
-      // water.castShadow = true
 
       scene.add(water)
 
@@ -381,7 +277,9 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
     const resizeObserver = new ResizeObserver(onResize)
     resizeObserver.observe(rendererContainer.current!)
 
-    const eventsManager: EventsManager = new EventsManager()
+    const eventsManager: EventsManager = new EventsManager(
+      rendererContainer.current,
+    )
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -426,26 +324,18 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
     const onMouseDown = (): void => {
       rendererContainer.current?.classList.add(styles.grabbing)
     }
-    eventsManager.addWindowEvent('mousedown', onMouseDown)
+    eventsManager.addContainerEvent('mousedown', onMouseDown)
 
     const onMouseUp = (): void => {
       rendererContainer.current?.classList.remove(styles.grabbing)
     }
-    eventsManager.addWindowEvent('mouseup', onMouseUp)
+    eventsManager.addContainerEvent('mouseup', onMouseUp)
 
     const animate: XRFrameRequestCallback = (): void => {
       rendererProperties.current?.stats.update()
 
-      // rendererProperties.current?.camera.position.setX(
-      //   rendererProperties.current?.camera.position.x - 4,
-      // )
-
       rendererProperties.current!.water.material.uniforms['time'].value +=
         1.0 / 60.0 / 2
-
-      // rendererProperties.current?.camera.position.setX(
-      //   rendererProperties.current?.camera.position.x + 0.05,
-      // )
 
       rendererProperties.current?.camera.translateZ(-0.2)
       rendererProperties.current?.sunLight.translateZ(-0.2)
@@ -482,15 +372,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
     folderWater.add(waterUniforms.size, 'value', 0.1, 10, 0.1).name('size')
     folderWater.open()
 
-    // const speedFolder: GUI = panel.addFolder('Lights')
-    // speedFolder
-    //   .add(settings.current.lights, 'intensity', 0, 100, 0.1)
-    //   .onChange((value: number): void => {
-    //     for (const light of rendererProperties.current!.lights) {
-    //       light.intensity = value
-    //     }
-    //   })
-
     return (): void => {
       panel.destroy()
 
@@ -506,6 +387,53 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       <div ref={rendererContainer} className={styles.container}></div>
 
       <LoadingScreen loading={loadState < 1} />
+
+      <script
+        id="heightmapFragmentShader"
+        type="x-shader/x-fragment"
+        dangerouslySetInnerHTML={{
+          __html: `
+            #include <common>
+
+            uniform vec2 mousePos;
+            uniform float mouseSize;
+            uniform float viscosityConstant;
+            uniform float heightCompensation;
+
+            void main()	{
+
+              vec2 cellSize = 1.0 / resolution.xy;
+
+              vec2 uv = gl_FragCoord.xy * cellSize;
+
+              // heightmapValue.x == height from previous frame
+              // heightmapValue.y == height from penultimate frame
+              // heightmapValue.z, heightmapValue.w not used
+              vec4 heightmapValue = texture2D( heightmap, uv );
+
+              // Get neighbours
+              vec4 north = texture2D( heightmap, uv + vec2( 0.0, cellSize.y ) );
+              vec4 south = texture2D( heightmap, uv + vec2( 0.0, - cellSize.y ) );
+              vec4 east = texture2D( heightmap, uv + vec2( cellSize.x, 0.0 ) );
+              vec4 west = texture2D( heightmap, uv + vec2( - cellSize.x, 0.0 ) );
+
+              // https://web.archive.org/web/20080618181901/http://freespace.virgin.net/hugo.elias/graphics/x_water.htm
+
+              float newHeight = ( ( north.x + south.x + east.x + west.x ) * 0.5 - heightmapValue.y ) * viscosityConstant;
+
+              // Mouse influence
+              float mousePhase = clamp( length( ( uv - vec2( 0.5 ) ) * BOUNDS - vec2( mousePos.x, - mousePos.y ) ) * PI / mouseSize, 0.0, PI );
+              newHeight += ( cos( mousePhase ) + 1.0 ) * 0.28;
+
+              heightmapValue.y = heightmapValue.x;
+              heightmapValue.x = newHeight;
+
+              gl_FragColor = heightmapValue;
+
+            }
+          `,
+        }}
+      />
     </div>
   )
 }

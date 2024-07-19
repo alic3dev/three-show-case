@@ -8,8 +8,10 @@ interface ChunkManagerOptionsBase {
   MAX_CHUNKS: number
   MAX_CHUNKS_IN_MEMORY: number
 
-  matFloor: THREE.MeshPhongMaterial
-  structureMaterial: THREE.MeshPhongMaterial
+  materials: Record<string, THREE.Material>
+
+  matFloor: THREE.Material
+  structureMaterial: THREE.Material
 }
 
 export interface ChunkManagerOptions extends ChunkManagerOptionsBase {
@@ -26,6 +28,8 @@ const defaultOptions: ChunkManagerOptionsBase = Object.freeze({
   CHUNK_SIZE: 100,
   MAX_CHUNKS: 49,
   MAX_CHUNKS_IN_MEMORY: 100,
+
+  materials: {},
 
   matFloor: new THREE.MeshPhongMaterial({
     color: 0x808080,
@@ -59,6 +63,8 @@ type GenerateChunkMethod = (
   options: ChunkManagerOptions,
 ) => Chunk
 
+type GetCameraPositionMethod = () => THREE.Vector3
+
 export class ChunkManager {
   private scene: THREE.Scene
   private camera: THREE.Camera
@@ -67,13 +73,15 @@ export class ChunkManager {
   private count: number = 0
 
   private generateChunkMethod: GenerateChunkMethod
+  private getCameraPositionMethod: GetCameraPositionMethod
 
   readonly options: Readonly<ChunkManagerOptions>
 
   constructor({
     scene,
     camera,
-    generateChunkMethod,
+    generateChunkMethod = ChunkManager.generateChunk,
+    getCameraPositionMethod = (): THREE.Vector3 => this.camera.position,
     startingLocation = new THREE.Vector3(0, 0, 0),
     options = {},
   }: {
@@ -81,6 +89,7 @@ export class ChunkManager {
     camera: THREE.Camera
     startingLocation?: THREE.Vector3
     generateChunkMethod?: GenerateChunkMethod
+    getCameraPositionMethod?: GetCameraPositionMethod
     options?: Partial<ChunkManagerOptionsBase>
   }) {
     this.scene = scene
@@ -99,7 +108,7 @@ export class ChunkManager {
     this.options = {
       ...baseOptions,
 
-      CHUNK_SIZE_HALF: baseOptions.MAX_CHUNKS / 2,
+      CHUNK_SIZE_HALF: baseOptions.CHUNK_SIZE / 2,
 
       MAX_CHUNKS_SQ_ROOT: Math.sqrt(baseOptions.MAX_CHUNKS),
       MAX_CHUNKS_SQ_ROOT_HALF_FLOORED: Math.floor(
@@ -111,9 +120,8 @@ export class ChunkManager {
         baseOptions.MAX_CHUNKS_IN_MEMORY - baseOptions.MAX_CHUNKS,
     }
 
-    this.generateChunkMethod =
-      generateChunkMethod ??
-      ((location, options) => ChunkManager.generateChunk(location, options))
+    this.getCameraPositionMethod = getCameraPositionMethod
+    this.generateChunkMethod = generateChunkMethod
     this.generate()
   }
 
@@ -214,18 +222,40 @@ export class ChunkManager {
     }
   }
 
+  forActiveChunks(callback: (chunk: Chunk) => void) {
+    this.forChunkOffsets(({ x, z }: { x: number; z: number }): void => {
+      const newLocation: THREE.Vector3 = new THREE.Vector3(
+        this.location.x + x,
+        this.location.y,
+        this.location.z + z,
+      )
+
+      const chunk: Chunk | undefined = this.get(newLocation)
+
+      if (chunk) {
+        callback(chunk)
+      }
+    })
+  }
+
+  getCameraPosition(): THREE.Vector3 {
+    return this.getCameraPositionMethod()
+  }
+
   getCameraChunkLocation(): THREE.Vector3 {
+    const cameraPosition: THREE.Vector3 = this.getCameraPosition()
+
     const cameraChunkLocation: THREE.Vector3 = new THREE.Vector3(
       Math.floor(
-        (this.camera.position.x + this.options.CHUNK_SIZE_HALF) /
+        (cameraPosition.x + this.options.CHUNK_SIZE_HALF) /
           this.options.CHUNK_SIZE,
       ),
       Math.floor(
-        (this.camera.position.y + this.options.CHUNK_SIZE_HALF) /
+        (cameraPosition.y + this.options.CHUNK_SIZE_HALF) /
           this.options.CHUNK_SIZE,
       ),
       Math.floor(
-        (this.camera.position.z + this.options.CHUNK_SIZE_HALF) /
+        (cameraPosition.z + this.options.CHUNK_SIZE_HALF) /
           this.options.CHUNK_SIZE,
       ),
     )

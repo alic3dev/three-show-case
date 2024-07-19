@@ -4,7 +4,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
@@ -13,9 +13,10 @@ import { AmmoHelper } from '@/utils/ammo/AmmoHelper'
 import { EventsManager } from '@/utils/EventsManager'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { generateRoomLayout } from '@/utils/rooms'
+import { randomColor } from '@/utils/colors'
 
 import styles from '@/apps/StandardApp.module.scss'
-import { randomColor } from '@/utils/colors'
+import { resolveAsset } from '@/utils/resolveAsset'
 
 export const displayName: string = 'First Person Room Generation'
 
@@ -56,7 +57,10 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
       return
     }
 
-    const eventsManager: EventsManager = new EventsManager()
+    let resizeObserver: ResizeObserver | null = null
+    const eventsManager: EventsManager = new EventsManager(
+      rendererContainer.current,
+    )
     let aborted: boolean = false
 
     if (!renderer.current) {
@@ -95,7 +99,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         const grid: THREE.Group = new THREE.Group()
 
         const floorDiffuseTexture = new THREE.TextureLoader().load(
-          '/assets/textures/FloorsCheckerboard_S_Diffuse.jpg',
+          resolveAsset('textures/FloorsCheckerboard_S_Diffuse.jpg'),
           (texture: THREE.Texture) => {
             setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -104,7 +108,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         )
 
         const floorNormalTexture = new THREE.TextureLoader().load(
-          '/assets/textures/FloorsCheckerboard_S_Diffuse.jpg',
+          resolveAsset('textures/FloorsCheckerboard_S_Normal.jpg'),
           (texture: THREE.Texture) => {
             setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -128,35 +132,17 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           normalMap: floorNormalTexture,
         })
 
-        // const floorWallNormalTexture = new THREE.TextureLoader().load(
-        //   '/assets/textures/grasslight-big-nm.jpg',
-        // )
-        // floorWallNormalTexture.wrapS = floorWallNormalTexture.wrapT =
-        //   THREE.RepeatWrapping
-
-        // const floorWallTextureScale: number = 1
-
-        // floorWallNormalTexture.repeat.set(
-        //   floorWallTextureScale,
-        //   floorWallTextureScale,
-        // )
-
         const floorWallMaterial = new THREE.MeshPhongMaterial({
           color: 0xffffff,
           specular: 0x606060,
 
           reflectivity: 100,
           shininess: 30,
-
-          // map: new THREE.Texture()
-          // normalMap: floorWallNormalTexture,
-          // normalScale: new THREE.Vector2(50, 50),
         })
         const floorMaterial = floorTexturedMaterial
 
         const lightStructureMaterial = new THREE.MeshPhongMaterial({
           color: 0x404040,
-          // emissive: 0xff0000,
           specular: 0x606060,
           reflectivity: 10,
           side: THREE.DoubleSide,
@@ -881,18 +867,29 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
           rendererProperties.current.scene.add(debugObject)
         }
 
-        const onResize: (ev: UIEvent) => void = (): void => {
-          rendererProperties.current!.camera.aspect =
-            rendererContainer.current!.clientWidth /
-            rendererContainer.current!.clientHeight
-          rendererProperties.current!.camera.updateProjectionMatrix()
+        let resizeTimeoutHandle: number
+        const onResize: () => void = (): void => {
+          window.clearTimeout(resizeTimeoutHandle)
+          resizeTimeoutHandle = window.setTimeout((): void => {
+            if (!rendererProperties.current || !rendererContainer.current)
+              return
 
-          renderer.current?.setSize(
-            rendererContainer.current!.clientWidth,
-            rendererContainer.current!.clientHeight,
-          )
+            rendererProperties.current.camera.aspect =
+              rendererContainer.current.clientWidth /
+              rendererContainer.current.clientHeight
+            rendererProperties.current.camera.updateProjectionMatrix()
+
+            if (!renderer.current) return
+
+            renderer.current.setSize(
+              rendererContainer.current.clientWidth,
+              rendererContainer.current.clientHeight,
+            )
+          }, 0)
         }
-        eventsManager.addWindowEvent('resize', onResize)
+
+        resizeObserver = new ResizeObserver(onResize)
+        resizeObserver.observe(rendererContainer.current!)
 
         const heldKeys: Record<string, boolean> = {}
 
@@ -1002,12 +999,12 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
           rendererContainer.current?.classList.add(styles.grabbing)
         }
-        eventsManager.addWindowEvent('mousedown', onMouseDown)
+        eventsManager.addContainerEvent('mousedown', onMouseDown)
 
         const onMouseUp = (): void => {
           rendererContainer.current?.classList.remove(styles.grabbing)
         }
-        eventsManager.addWindowEvent('mouseup', onMouseUp)
+        eventsManager.addContainerEvent('mouseup', onMouseUp)
 
         const MOVEMENT_SPEED: number = 0.2
 
@@ -1080,6 +1077,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
+      resizeObserver?.disconnect()
       eventsManager.removeAllEvents()
     }
   }, [])
