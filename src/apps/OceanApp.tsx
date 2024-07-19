@@ -5,18 +5,19 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { Water } from 'three/addons/objects/Water.js'
 import { Sky } from 'three/addons/objects/Sky.js'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
+import { Stats } from '@/utils/stats'
 import * as objectUtils from '@/utils/objects'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { Chunk, ChunkManager } from '@/utils/Chunks'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Ocean'
 
@@ -356,18 +357,30 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       }
     }
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        rendererProperties.current.camera.aspect =
+          rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight
+        rendererProperties.current.camera.updateProjectionMatrix()
+
+        if (!renderer.current) return
+
+        renderer.current.setSize(
+          rendererContainer.current.clientWidth,
+          rendererContainer.current.clientHeight,
+        )
+      }, 0)
     }
-    window.addEventListener('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
+
+    const eventsManager: EventsManager = new EventsManager()
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -375,7 +388,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = false
       heldKeys[ev.code] = false
     }
-    window.addEventListener('keyup', onKeyup)
+    eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
@@ -407,17 +420,17 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = true
       heldKeys[ev.code] = true
     }
-    window.addEventListener('keydown', onKeydown)
+    eventsManager.addWindowEvent('keydown', onKeydown)
 
     const onMouseDown = (): void => {
       rendererContainer.current?.classList.add(styles.grabbing)
     }
-    window.addEventListener('mousedown', onMouseDown)
+    eventsManager.addWindowEvent('mousedown', onMouseDown)
 
     const onMouseUp = (): void => {
       rendererContainer.current?.classList.remove(styles.grabbing)
     }
-    window.addEventListener('mouseup', onMouseUp)
+    eventsManager.addWindowEvent('mouseup', onMouseUp)
 
     const animate: XRFrameRequestCallback = (): void => {
       rendererProperties.current?.stats.update()
@@ -482,13 +495,8 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
-      window.removeEventListener('resize', onResize)
-
-      window.removeEventListener('keydown', onKeydown)
-      window.removeEventListener('keyup', onKeyup)
-
-      window.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
+      resizeObserver.disconnect()
+      eventsManager.removeAllEvents()
     }
   }, [])
 

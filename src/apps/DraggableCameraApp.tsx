@@ -4,7 +4,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
@@ -12,6 +12,7 @@ import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
 import styles from '@/apps/StandardAppWithGrab.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Draggable Camera'
 
@@ -245,18 +246,26 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
       rendererProperties.current!.objects.zLine.visible = false
     }
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        rendererProperties.current!.camera.aspect =
+          rendererContainer.current!.clientWidth /
+          rendererContainer.current!.clientHeight
+        rendererProperties.current!.camera.updateProjectionMatrix()
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        renderer.current?.setSize(
+          rendererContainer.current!.clientWidth,
+          rendererContainer.current!.clientHeight,
+        )
+      }, 0)
     }
-    window.addEventListener('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current)
+
+    const eventsManager = new EventsManager(rendererContainer.current)
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -264,7 +273,7 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = false
       heldKeys[ev.code] = false
     }
-    window.addEventListener('keyup', onKeyup)
+    eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
@@ -300,17 +309,17 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = true
       heldKeys[ev.code] = true
     }
-    window.addEventListener('keydown', onKeydown)
+    eventsManager.addWindowEvent('keydown', onKeydown)
 
     const onMouseDown = () => {
       rendererContainer.current?.classList.add(styles.grabbing)
     }
-    window.addEventListener('mousedown', onMouseDown)
+    eventsManager.addWindowEvent('mousedown', onMouseDown)
 
     const onMouseUp = () => {
       rendererContainer.current?.classList.remove(styles.grabbing)
     }
-    window.addEventListener('mouseup', onMouseUp)
+    eventsManager.addWindowEvent('mouseup', onMouseUp)
 
     const animate: XRFrameRequestCallback = (): void => {
       rendererProperties.current?.stats.update()
@@ -362,13 +371,8 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
-      window.removeEventListener('resize', onResize)
-
-      window.removeEventListener('keydown', onKeydown)
-      window.removeEventListener('keyup', onKeyup)
-
-      window.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
+      resizeObserver.disconnect()
+      eventsManager.removeAllEvents()
     }
   }, [])
 

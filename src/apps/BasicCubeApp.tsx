@@ -4,11 +4,12 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL.js'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Basic Cube'
 
@@ -130,18 +131,26 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
       }
     }
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+    const eventsManager = new EventsManager(rendererContainer.current)
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        rendererProperties.current!.camera.aspect =
+          rendererContainer.current!.clientWidth /
+          rendererContainer.current!.clientHeight
+        rendererProperties.current!.camera.updateProjectionMatrix()
+
+        renderer.current?.setSize(
+          rendererContainer.current!.clientWidth,
+          rendererContainer.current!.clientHeight,
+        )
+      }, 0)
     }
-    window.addEventListener('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current)
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -149,7 +158,7 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = false
       heldKeys[ev.code] = false
     }
-    window.addEventListener('keyup', onKeyup)
+    eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
@@ -185,7 +194,7 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = true
       heldKeys[ev.code] = true
     }
-    window.addEventListener('keydown', onKeydown)
+    eventsManager.addWindowEvent('keydown', onKeydown)
 
     const animate: XRFrameRequestCallback = (
       time: DOMHighResTimeStamp,
@@ -210,10 +219,8 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
     return (): void => {
       renderer.current?.setAnimationLoop(null)
 
-      window.removeEventListener('resize', onResize)
-
-      window.removeEventListener('keydown', onKeydown)
-      window.removeEventListener('keyup', onKeyup)
+      resizeObserver.disconnect()
+      eventsManager.removeAllEvents()
     }
   }, [])
 

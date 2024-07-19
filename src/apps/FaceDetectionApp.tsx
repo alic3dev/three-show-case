@@ -4,7 +4,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection'
@@ -802,20 +802,32 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
       })
     }
 
-    const eventsManager: EventsManager = new EventsManager()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+        rendererProperties.current.camera.aspect =
+          rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight
+        rendererProperties.current.camera.updateProjectionMatrix()
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        if (!renderer.current) return
+
+        renderer.current.setSize(
+          rendererContainer.current.clientWidth,
+          rendererContainer.current.clientHeight,
+        )
+      }, 0)
     }
-    eventsManager.addWindowEvent('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
+
+    const eventsManager: EventsManager = new EventsManager(
+      rendererContainer.current,
+    )
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -927,6 +939,7 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
+      resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
   }, [])
@@ -947,6 +960,7 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
             height: '100%',
             objectFit: 'cover',
             opacity: 0.2,
+            pointerEvents: 'none',
           }}
         ></canvas>
         <video

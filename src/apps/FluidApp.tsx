@@ -5,7 +5,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { Water } from 'three/addons/objects/Water.js'
 import { Sky } from 'three/addons/objects/Sky.js'
@@ -17,6 +17,7 @@ import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { Chunk, ChunkManager } from '@/utils/Chunks'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = '🩸'
 
@@ -252,18 +253,32 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
       }
     }
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        rendererProperties.current.camera.aspect =
+          rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight
+        rendererProperties.current.camera.updateProjectionMatrix()
+
+        if (!renderer.current) return
+
+        renderer.current.setSize(
+          rendererContainer.current.clientWidth,
+          rendererContainer.current.clientHeight,
+        )
+      }, 0)
     }
-    window.addEventListener('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
+
+    const eventsManager: EventsManager = new EventsManager(
+      rendererContainer.current,
+    )
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -271,7 +286,7 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = false
       heldKeys[ev.code] = false
     }
-    window.addEventListener('keyup', onKeyup)
+    eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
@@ -303,17 +318,17 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = true
       heldKeys[ev.code] = true
     }
-    window.addEventListener('keydown', onKeydown)
+    eventsManager.addWindowEvent('keydown', onKeydown)
 
     const onMouseDown = (): void => {
       rendererContainer.current?.classList.add(styles.grabbing)
     }
-    window.addEventListener('mousedown', onMouseDown)
+    eventsManager.addContainerEvent('mousedown', onMouseDown)
 
     const onMouseUp = (): void => {
       rendererContainer.current?.classList.remove(styles.grabbing)
     }
-    window.addEventListener('mouseup', onMouseUp)
+    eventsManager.addContainerEvent('mouseup', onMouseUp)
 
     const animate: XRFrameRequestCallback = (): void => {
       rendererProperties.current?.stats.update()
@@ -361,13 +376,8 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
-      window.removeEventListener('resize', onResize)
-
-      window.removeEventListener('keydown', onKeydown)
-      window.removeEventListener('keyup', onKeyup)
-
-      window.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
+      resizeObserver.disconnect()
+      eventsManager.removeAllEvents()
     }
   }, [])
 
@@ -376,6 +386,53 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
       <div ref={rendererContainer} className={styles.container}></div>
 
       <LoadingScreen loading={loadState < 1} />
+
+      <script
+        id="heightmapFragmentShader"
+        type="x-shader/x-fragment"
+        dangerouslySetInnerHTML={{
+          __html: `
+            #include <common>
+
+            uniform vec2 mousePos;
+            uniform float mouseSize;
+            uniform float viscosityConstant;
+            uniform float heightCompensation;
+
+            void main()	{
+
+              vec2 cellSize = 1.0 / resolution.xy;
+
+              vec2 uv = gl_FragCoord.xy * cellSize;
+
+              // heightmapValue.x == height from previous frame
+              // heightmapValue.y == height from penultimate frame
+              // heightmapValue.z, heightmapValue.w not used
+              vec4 heightmapValue = texture2D( heightmap, uv );
+
+              // Get neighbours
+              vec4 north = texture2D( heightmap, uv + vec2( 0.0, cellSize.y ) );
+              vec4 south = texture2D( heightmap, uv + vec2( 0.0, - cellSize.y ) );
+              vec4 east = texture2D( heightmap, uv + vec2( cellSize.x, 0.0 ) );
+              vec4 west = texture2D( heightmap, uv + vec2( - cellSize.x, 0.0 ) );
+
+              // https://web.archive.org/web/20080618181901/http://freespace.virgin.net/hugo.elias/graphics/x_water.htm
+
+              float newHeight = ( ( north.x + south.x + east.x + west.x ) * 0.5 - heightmapValue.y ) * viscosityConstant;
+
+              // Mouse influence
+              float mousePhase = clamp( length( ( uv - vec2( 0.5 ) ) * BOUNDS - vec2( mousePos.x, - mousePos.y ) ) * PI / mouseSize, 0.0, PI );
+              newHeight += ( cos( mousePhase ) + 1.0 ) * 0.28;
+
+              heightmapValue.y = heightmapValue.x;
+              heightmapValue.x = newHeight;
+
+              gl_FragColor = heightmapValue;
+
+            }
+          `,
+        }}
+      />
     </div>
   )
 }

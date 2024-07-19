@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 

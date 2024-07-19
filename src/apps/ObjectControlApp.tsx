@@ -4,12 +4,13 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Controlling an Object'
 
@@ -227,18 +228,24 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
       rendererProperties.current!.objects.zLine.visible = false
     }
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        rendererProperties.current!.camera.aspect =
+          rendererContainer.current!.clientWidth /
+          rendererContainer.current!.clientHeight
+        rendererProperties.current!.camera.updateProjectionMatrix()
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        renderer.current?.setSize(
+          rendererContainer.current!.clientWidth,
+          rendererContainer.current!.clientHeight,
+        )
+      }, 0)
     }
-    window.addEventListener('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current)
 
     const animate: XRFrameRequestCallback = (
       time: DOMHighResTimeStamp,
@@ -313,11 +320,13 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
-      window.removeEventListener('resize', onResize)
+      resizeObserver.disconnect()
     }
   }, [])
 
   React.useEffect((): (() => void) | void => {
+    const eventsManager: EventsManager = new EventsManager()
+
     const onKeyup: (ev: KeyboardEvent) => void = (ev: KeyboardEvent): void => {
       setHeldKeys(
         (prevHeldKeys: Record<string, number>): Record<string, number> => ({
@@ -327,7 +336,7 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
         }),
       )
     }
-    window.addEventListener('keyup', onKeyup)
+    eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
@@ -372,11 +381,10 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
         },
       )
     }
-    window.addEventListener('keydown', onKeydown)
+    eventsManager.addWindowEvent('keydown', onKeydown)
 
     return (): void => {
-      window.removeEventListener('keydown', onKeydown)
-      window.removeEventListener('keyup', onKeyup)
+      eventsManager.removeAllEvents()
     }
   }, [heldKeys])
 

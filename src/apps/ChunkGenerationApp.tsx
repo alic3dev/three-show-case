@@ -4,7 +4,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { Sky } from 'three/addons/objects/Sky.js'
 
@@ -13,25 +13,11 @@ import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { ChunkManager } from '@/utils/Chunks'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Chunk Generation'
 
 export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
-  // const settings = React.useRef<{
-  //   rotation: {
-  //     speed: number
-  //   }
-  //   lights: {
-  //     intensity: number
-  //   }
-  // }>({
-  //   rotation: {
-  //     speed: 0.01,
-  //   },
-  //   lights: {
-  //     intensity: 25,
-  //   },
-  // })
   const statsPanel = React.useRef<{ value: number }>({ value: 0 })
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
@@ -71,9 +57,6 @@ export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
       renderer.current.shadowMap.enabled = true
       renderer.current.shadowMap.type = THREE.PCFSoftShadowMap
 
-      // renderer.current.toneMapping = THREE.ACESFilmicToneMapping
-      // renderer.current.toneMappingExposure = 0.5
-
       renderer.current.setClearColor(855309)
 
       rendererContainer.current.appendChild(renderer.current.domElement)
@@ -90,7 +73,6 @@ export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
         1000,
       )
       camera.position.set(0, 7, 0)
-      // camera.lookAt(0, 0, 0)
 
       const chunkManager: ChunkManager = new ChunkManager({ scene, camera })
 
@@ -112,29 +94,8 @@ export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
       )
       scene.add(ambientLight)
 
-      // 0x585857
-      // 0x3d363f
-
       const hemiLight = new THREE.HemisphereLight(0x3d363f, 0x404040, 1)
       scene.add(hemiLight)
-
-      // const dirLight = new THREE.DirectionalLight(0xfdc371, 1)
-      // dirLight.position.set(0, 7, -200)
-      // dirLight.target.position.set(0, 0, -100)
-
-      // dirLight.castShadow = true
-      // dirLight.shadow.mapSize.width = 8192 / 8
-      // dirLight.shadow.mapSize.height = dirLight.shadow.mapSize.width
-      // dirLight.shadow.radius = 2
-      // dirLight.shadow.camera.left = -50
-      // dirLight.shadow.camera.right = 50
-      // dirLight.shadow.camera.top = 50
-      // dirLight.shadow.camera.bottom = -50
-
-      // scene.add(dirLight)
-
-      // const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 5)
-      // scene.add(dirLightHelper)
 
       const sky: Sky = new Sky()
       sky.scale.setScalar(Number.MAX_SAFE_INTEGER)
@@ -210,18 +171,30 @@ export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
       }
     }
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        rendererProperties.current.camera.aspect =
+          rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight
+        rendererProperties.current.camera.updateProjectionMatrix()
+
+        if (!renderer.current) return
+
+        renderer.current.setSize(
+          rendererContainer.current.clientWidth,
+          rendererContainer.current.clientHeight,
+        )
+      }, 0)
     }
-    window.addEventListener('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
+
+    const eventsManager: EventsManager = new EventsManager()
 
     const heldKeys: Record<string, boolean> = {}
 
@@ -229,7 +202,7 @@ export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = false
       heldKeys[ev.code] = false
     }
-    window.addEventListener('keyup', onKeyup)
+    eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
@@ -261,24 +234,20 @@ export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
       heldKeys[ev.key] = true
       heldKeys[ev.code] = true
     }
-    window.addEventListener('keydown', onKeydown)
+    eventsManager.addWindowEvent('keydown', onKeydown)
 
     const onMouseDown = (): void => {
       rendererContainer.current?.classList.add(styles.grabbing)
     }
-    window.addEventListener('mousedown', onMouseDown)
+    eventsManager.addWindowEvent('mousedown', onMouseDown)
 
     const onMouseUp = (): void => {
       rendererContainer.current?.classList.remove(styles.grabbing)
     }
-    window.addEventListener('mouseup', onMouseUp)
+    eventsManager.addWindowEvent('mouseup', onMouseUp)
 
     const animate: XRFrameRequestCallback = (): void => {
       rendererProperties.current?.stats.update()
-
-      // rendererProperties.current?.camera.position.setX(
-      //   rendererProperties.current?.camera.position.x - 4,
-      // )
 
       rendererProperties.current?.camera.position.setZ(
         rendererProperties.current?.camera.position.z - 1,
@@ -293,29 +262,15 @@ export const ChunkGenerationApp: AppComponent = (): React.ReactElement => {
     }
     renderer.current.setAnimationLoop(animate)
 
-    const panel = new GUI({ autoPlace: true })
-
-    // const speedFolder: GUI = panel.addFolder('Lights')
-    // speedFolder
-    //   .add(settings.current.lights, 'intensity', 0, 100, 0.1)
-    //   .onChange((value: number): void => {
-    //     for (const light of rendererProperties.current!.lights) {
-    //       light.intensity = value
-    //     }
-    //   })
+    const panel: GUI = new GUI({ autoPlace: true })
 
     return (): void => {
       panel.destroy()
 
       renderer.current!.setAnimationLoop(null)
 
-      window.removeEventListener('resize', onResize)
-
-      window.removeEventListener('keydown', onKeydown)
-      window.removeEventListener('keyup', onKeyup)
-
-      window.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
+      resizeObserver.disconnect()
+      eventsManager.removeAllEvents()
     }
   }, [])
 

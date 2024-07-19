@@ -5,7 +5,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import Stats from 'three/addons/libs/stats.module.js'
+import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { Sky } from 'three/addons/objects/Sky.js'
@@ -258,19 +258,19 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
         },
       )
 
-      const textureSpecular = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/grass1-specular-map.png',
-        (texture: THREE.Texture) => {
-          setLoadState((prevLoadState: number): number => prevLoadState + 1)
+      // const textureSpecular = new THREE.TextureLoader().load(
+      //   '/assets/textures/seamlessTextures2/grass1-specular-map.png',
+      //   (texture: THREE.Texture) => {
+      //     setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
-          texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+      //     texture.wrapS = texture.wrapT = THREE.RepeatWrapping
 
-          texture.repeat.set(
-            (texture.image.width / CHUNK_SIZE) * 8,
-            (texture.image.height / CHUNK_SIZE) * 8,
-          )
-        },
-      )
+      //     texture.repeat.set(
+      //       (texture.image.width / CHUNK_SIZE) * 8,
+      //       (texture.image.height / CHUNK_SIZE) * 8,
+      //     )
+      //   },
+      // )
 
       const pathTexture = new THREE.TextureLoader().load(
         '/assets/textures/seamlessTextures2/IMGP5511_seamless.jpg',
@@ -305,16 +305,16 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
         },
       )
 
-      const pathSpecular = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/5511-specular.png',
-        (texture: THREE.Texture) => {
-          setLoadState((prevLoadState: number): number => prevLoadState + 1)
+      // const pathSpecular = new THREE.TextureLoader().load(
+      //   '/assets/textures/seamlessTextures2/5511-specular.png',
+      //   (texture: THREE.Texture) => {
+      //     setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
-          texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+      //     texture.wrapS = texture.wrapT = THREE.RepeatWrapping
 
-          texture.repeat.set(0.2, 0.2)
-        },
-      )
+      //     texture.repeat.set(0.2, 0.2)
+      //   },
+      // )
 
       const pathMaterial = new THREE.MeshStandardMaterial({
         map: pathTexture,
@@ -352,8 +352,8 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
           gltf.scene.children[0].receiveShadow = true
 
           const instancedGrass = new THREE.InstancedMesh(
-            gltf.scene.children[0].geometry,
-            gltf.scene.children[0].material,
+            (gltf.scene.children[0] as THREE.Mesh).geometry,
+            (gltf.scene.children[0] as THREE.Mesh).material,
             100,
           )
 
@@ -532,20 +532,32 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       }
     }
 
-    const eventsManager: EventsManager = new EventsManager()
+    let resizeTimeoutHandle: number
+    const onResize: () => void = (): void => {
+      window.clearTimeout(resizeTimeoutHandle)
+      resizeTimeoutHandle = window.setTimeout((): void => {
+        if (!rendererProperties.current || !rendererContainer.current) return
 
-    const onResize: (ev: UIEvent) => void = (): void => {
-      rendererProperties.current!.camera.aspect =
-        rendererContainer.current!.clientWidth /
-        rendererContainer.current!.clientHeight
-      rendererProperties.current!.camera.updateProjectionMatrix()
+        rendererProperties.current.camera.aspect =
+          rendererContainer.current.clientWidth /
+          rendererContainer.current.clientHeight
+        rendererProperties.current.camera.updateProjectionMatrix()
 
-      renderer.current?.setSize(
-        rendererContainer.current!.clientWidth,
-        rendererContainer.current!.clientHeight,
-      )
+        if (!renderer.current) return
+
+        renderer.current.setSize(
+          rendererContainer.current.clientWidth,
+          rendererContainer.current.clientHeight,
+        )
+      }, 0)
     }
-    eventsManager.addWindowEvent('resize', onResize)
+
+    const resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(rendererContainer.current!)
+
+    const eventsManager: EventsManager = new EventsManager(
+      rendererContainer.current,
+    )
 
     const onPointerMove = (ev: PointerEvent): void => {
       if (!player.current?.pointerLocked) return
@@ -562,7 +574,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
         )
       }
     }
-    eventsManager.addWindowEvent('pointermove', onPointerMove)
+    eventsManager.addContainerEvent('pointermove', onPointerMove)
 
     const lockChangeAlert = (): void => {
       if (document.pointerLockElement === renderer.current?.domElement) {
@@ -625,7 +637,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
         renderer.current?.domElement.requestPointerLock()
       }
     }
-    eventsManager.addWindowEvent('mousedown', onMouseDown)
+    eventsManager.addContainerEvent('mousedown', onMouseDown)
 
     const animate: XRFrameRequestCallback = (): void => {
       if (!renderer.current) return
@@ -706,6 +718,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
 
       renderer.current!.setAnimationLoop(null)
 
+      resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
   }, [])
