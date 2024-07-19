@@ -18,6 +18,7 @@ import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { Chunk, ChunkManager } from '@/utils/Chunks'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { resolveAsset } from '@/utils/resolveAsset'
 
 export const displayName: string = 'Walk'
 
@@ -217,7 +218,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       const CHUNK_SIZE: number = 250
 
       const texture = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/grass1.jpg',
+        resolveAsset('textures/seamlessTextures2/grass1.jpg'),
         (texture: THREE.Texture) => {
           setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -231,7 +232,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       )
 
       const textureNormal = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/grass1-normal.png',
+        resolveAsset('textures/seamlessTextures2/grass1-normal.png'),
         (texture: THREE.Texture) => {
           setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -245,7 +246,9 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       )
 
       const textureAmbientOcculsion = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/grass1-ambient-occlusion-map.png',
+        resolveAsset(
+          'textures/seamlessTextures2/grass1-ambient-occlusion-map.png',
+        ),
         (texture: THREE.Texture) => {
           setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -259,7 +262,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       )
 
       // const textureSpecular = new THREE.TextureLoader().load(
-      //   '/assets/textures/seamlessTextures2/grass1-specular-map.png',
+      //   resolveAsset('textures/seamlessTextures2/grass1-specular-map.png'),
       //   (texture: THREE.Texture) => {
       //     setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -273,7 +276,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       // )
 
       const pathTexture = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/IMGP5511_seamless.jpg',
+        resolveAsset('textures/seamlessTextures2/IMGP5511_seamless.jpg'),
         (texture: THREE.Texture) => {
           setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -284,7 +287,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       )
 
       const pathTextureNormal = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/5511-normal.png',
+        resolveAsset('textures/seamlessTextures2/5511-normal.png'),
         (texture: THREE.Texture) => {
           setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -295,7 +298,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       )
 
       const pathAmbient = new THREE.TextureLoader().load(
-        '/assets/textures/seamlessTextures2/5511-ambient.png',
+        resolveAsset('textures/seamlessTextures2/5511-ambient.png'),
         (texture: THREE.Texture) => {
           setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -306,7 +309,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       )
 
       // const pathSpecular = new THREE.TextureLoader().load(
-      //   '/assets/textures/seamlessTextures2/5511-specular.png',
+      //   resolveAsset('textures/seamlessTextures2/5511-specular.png'),
       //   (texture: THREE.Texture) => {
       //     setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -340,7 +343,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       const loader = new GLTFLoader()
 
       loader.load(
-        '/assets/models/grass_medium_01_1k.gltf/grass_medium_01_1k.gltf',
+        resolveAsset('models/grass_medium_01_1k.gltf/grass_medium_01_1k.gltf'),
         function (gltf) {
           gltf.scene.children[0].scale.set(10, 10, 10)
           const brightness: number = 5
@@ -390,7 +393,7 @@ export const WalkApp: AppComponent = (): React.ReactElement => {
       // const loader = new GLTFLoader()
 
       // loader.load(
-      //   '/assets/models/rock_moss_set_01_1k.gltf/rock_moss_set_01_1k.gltf',
+      //   resolveAsset('models/rock_moss_set_01_1k.gltf/rock_moss_set_01_1k.gltf'),
       //   function (gltf) {
       //     const rockScale: number = 5
 

@@ -18,6 +18,7 @@ import { Chunk, ChunkManager } from '@/utils/Chunks'
 
 import styles from '@/apps/StandardApp.module.scss'
 import { EventsManager } from '@/utils/EventsManager'
+import { resolveAsset } from '@/utils/resolveAsset'
 
 export const displayName: string = '🩸'
 
@@ -168,7 +169,7 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
         textureWidth: 1024,
         textureHeight: 1024,
         waterNormals: new THREE.TextureLoader().load(
-          '/assets/textures/waternormals.jpg',
+          resolveAsset('textures/waternormals.jpg'),
           function (texture) {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping
 

@@ -16,6 +16,7 @@ import { generateBuildingLayout } from '@/utils/rooms'
 import { randomColor } from '@/utils/colors'
 
 import styles from '@/apps/StandardApp.module.scss'
+import { resolveAsset } from '@/utils/resolveAsset'
 
 export const displayName: string = 'First Person Building Generation'
 
@@ -99,7 +100,7 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
         const grid: THREE.Group = new THREE.Group()
 
         const floorDiffuseTexture = new THREE.TextureLoader().load(
-          '/assets/textures/FloorsCheckerboard_S_Diffuse.jpg',
+          resolveAsset('textures/FloorsCheckerboard_S_Diffuse.jpg'),
           (texture: THREE.Texture) => {
             setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
@@ -108,7 +109,7 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
         )
 
         const floorNormalTexture = new THREE.TextureLoader().load(
-          '/assets/textures/FloorsCheckerboard_S_Normal.jpg',
+          resolveAsset('textures/FloorsCheckerboard_S_Normal.jpg'),
           (texture: THREE.Texture) => {
             setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
