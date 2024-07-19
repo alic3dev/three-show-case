@@ -3,11 +3,6 @@ import dotenv from 'dotenv'
 
 dotenv.config({
   override: true,
-  path: path.resolve(process.cwd(), '.env'),
-})
-
-dotenv.config({
-  override: true,
   path: path.resolve(process.cwd(), '.env.local'),
 })
 
