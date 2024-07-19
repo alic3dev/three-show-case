@@ -36,6 +36,7 @@ import {
 } from '@/apps/FPBuildingGenerationApp'
 import { PuzzleApp, displayName as eleventhDisplayName } from '@/apps/PuzzleApp'
 import { WalkApp, displayName as twelththDisplayName } from '@/apps/WalkApp'
+import { FluidApp, displayName as thirteenthDisplayName } from '@/apps/FluidApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
@@ -50,6 +51,7 @@ export const apps: App[] = [
   { Component: FPBuildingGenerationApp, displayName: tenthDisplayName },
   { Component: PuzzleApp, displayName: eleventhDisplayName },
   { Component: WalkApp, displayName: twelththDisplayName },
+  { Component: FluidApp, displayName: thirteenthDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'
