@@ -13,9 +13,9 @@ import { AmmoHelper } from '@/utils/ammo/AmmoHelper'
 import { EventsManager } from '@/utils/EventsManager'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { generateBuildingLayout } from '@/utils/rooms'
+import { randomColor } from '@/utils/colors'
 
 import styles from '@/apps/StandardApp.module.scss'
-import { randomColor } from '@/utils/colors'
 
 export const displayName: string = 'First Person Building Generation'
 
@@ -105,7 +105,7 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
         )
 
         const floorNormalTexture = new THREE.TextureLoader().load(
-          '/assets/textures/FloorsCheckerboard_S_Diffuse.jpg',
+          '/assets/textures/FloorsCheckerboard_S_Normal.jpg',
           (texture: THREE.Texture) => {
             setLoadState((prevLoadState: number): number => prevLoadState + 1)
 

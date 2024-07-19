@@ -104,7 +104,7 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
         )
 
         const floorNormalTexture = new THREE.TextureLoader().load(
-          '/assets/textures/FloorsCheckerboard_S_Diffuse.jpg',
+          '/assets/textures/FloorsCheckerboard_S_Normal.jpg',
           (texture: THREE.Texture) => {
             setLoadState((prevLoadState: number): number => prevLoadState + 1)
 
