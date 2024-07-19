@@ -99,7 +99,7 @@ export class ChunkManager {
     this.options = {
       ...baseOptions,
 
-      CHUNK_SIZE_HALF: baseOptions.MAX_CHUNKS / 2,
+      CHUNK_SIZE_HALF: baseOptions.CHUNK_SIZE / 2,
 
       MAX_CHUNKS_SQ_ROOT: Math.sqrt(baseOptions.MAX_CHUNKS),
       MAX_CHUNKS_SQ_ROOT_HALF_FLOORED: Math.floor(
