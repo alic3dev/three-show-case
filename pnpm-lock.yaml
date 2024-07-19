@@ -11,6 +11,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.616.0
         version: 3.616.0
+      '@catppuccin/palette':
+        specifier: ^0.2.0
+        version: 0.2.0
       '@mediapipe/face_mesh':
         specifier: ^0.4.1633559619
         version: 0.4.1633559619
@@ -271,6 +274,9 @@ packages:
   '@aws-sdk/xml-builder@3.609.0':
     resolution: {integrity: sha512-l9XxNcA4HX98rwCC2/KoiWcmEiRfZe4G+mYwDbCFT87JIMj6GBhLDkAzr/W8KAaA2IDr8Vc6J8fZPgVulxxfMA==}
     engines: {node: '>=16.0.0'}
+
+  '@catppuccin/palette@0.2.0':
+    resolution: {integrity: sha512-PoAMQMEbL8fBEO80eusB+XQg+1i2kxQHw6COwBRC4bVWxWuRroZjm3K6bOdqPHNHKikDIV7wLi9hSG4NoD1FEQ==}
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -2137,6 +2143,8 @@ snapshots:
     dependencies:
       '@smithy/types': 3.3.0
       tslib: 2.6.3
+
+  '@catppuccin/palette@0.2.0': {}
 
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
