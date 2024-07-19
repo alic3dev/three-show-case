@@ -45,3 +45,4 @@ public/assets/face_mesh/*
 
 # S3 Backed Assets
 public/assets/*
+!public/assets/face_mesh
