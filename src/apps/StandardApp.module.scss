@@ -1,20 +1,11 @@
 .app {
-  position: relative;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 100%;
-
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
 .container {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -22,7 +13,7 @@
 }
 
 .controls {
-  position: fixed;
+  position: absolute;
   bottom: 1rem;
   right: 1rem;
 
@@ -31,7 +22,7 @@
 
   padding: 1rem;
 
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(var(--color-black-raw), 0.1);
 
   border-radius: 10px;
 
@@ -47,7 +38,9 @@
     margin: 0.25rem;
     padding: 0;
 
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--color-base);
+
+    color: var(--color-text);
 
     font-size: 2rem;
     line-height: 4rem;
@@ -56,17 +49,17 @@
     border-radius: 10px;
 
     &.held {
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--color-mantle);
 
       border: none;
 
-      outline: 1px solid #2334ea;
+      outline: 1px solid var(--color-blue);
     }
   }
 }
 
 .minimap {
-  position: fixed;
+  position: absolute;
   top: 20px;
   right: 20px;
 
