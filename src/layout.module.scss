@@ -40,11 +40,10 @@
 
   display: flex;
   flex-direction: column;
-  align-items: center;
 
   width: 200px;
 
-  padding: 0 2rem;
+  padding: 0 1rem;
   padding-top: 4rem;
 
   overflow-y: scroll;
@@ -53,7 +52,34 @@
 }
 
 .nav-item {
-  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+
+  padding: 0.4rem 1rem;
+  margin: 0.1rem 0;
+
+  border-radius: var(--border-radius-item-half);
+
+  box-shadow: inset 0px 0px 0px 0px rgba(var(--color-black-raw), 0);
+
+  transition: all 125ms ease-in-out;
+
+  & > *:first-child {
+    margin-right: 0.5rem;
+  }
+
+  &:hover {
+    background: rgba(var(--color-crust-raw), 0.5);
+  }
+
+  &.active,
+  &.pending {
+    background: var(--color-crust);
+
+    color: var(--color-sapphire);
+
+    box-shadow: inset var(--box-shadow-item-light);
+  }
 }
 
 .nav-spacer {

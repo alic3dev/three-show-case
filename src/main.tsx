@@ -1,10 +1,11 @@
-import type { RouteObject } from 'react-router-dom'
+import type { NavLinkRenderProps, RouteObject } from 'react-router-dom'
 
 import type { App } from '@/apps/types'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { PiDotsThreeVertical } from 'react-icons/pi'
+import { PiDotsThreeVertical, PiHouseLineDuotone } from 'react-icons/pi'
+
 import {
   createBrowserRouter,
   NavLink,
@@ -17,6 +18,7 @@ import { apps, NavigationApp } from '@/apps'
 
 import { Alic3 } from '@/components/Alic3'
 import { WithTitle } from '@/components/WithTitle'
+import { Footer } from './components/Footer'
 
 import { addAmoLoaderToWindow } from '@/utils/ammoCompatHelper'
 import { setAllRequiredPolyfills } from '@/utils/polyfills'
@@ -24,7 +26,6 @@ import { setAllRequiredPolyfills } from '@/utils/polyfills'
 import '@/main.scss'
 
 import styles from '@/layout.module.scss'
-import { Footer } from './components/Footer'
 
 setAllRequiredPolyfills()
 addAmoLoaderToWindow()
@@ -36,44 +37,43 @@ export function Layout({ children }: React.PropsWithChildren): React.ReactNode {
     setSideOpen((prevSideOpen: boolean): boolean => !prevSideOpen)
   }
 
+  const navLinkClassName = ({
+    isActive,
+    isPending,
+  }: NavLinkRenderProps): string => {
+    return `${styles['nav-item']} ${
+      isPending ? styles.pending : isActive ? styles.active : ''
+    }`
+  }
+
   return (
     <div className={styles.layout}>
       <div className={`${styles.side} ${sideOpen ? '' : styles.closed}`}>
         <nav className={styles.nav}>
           <Alic3 header />
 
-          <div className={styles['nav-item']}>
-            <NavLink
-              to={`/`}
-              className={({ isActive, isPending }) =>
-                isPending ? 'pending' : isActive ? 'active' : ''
-              }
-            >
-              Home
-            </NavLink>
-          </div>
+          <NavLink to={`/`} className={navLinkClassName}>
+            <PiHouseLineDuotone />
+            Home
+          </NavLink>
 
           {apps.map(
             (app: App, index: number): React.ReactElement => (
-              <div
+              <NavLink
                 key={`${app.displayName}-${index}`}
-                className={styles['nav-item']}
+                to={`/examples/${index + 1}`}
+                className={navLinkClassName}
               >
-                <NavLink
-                  to={`/examples/${index + 1}`}
-                  className={({ isActive, isPending }) =>
-                    isPending ? 'pending' : isActive ? 'active' : ''
-                  }
-                >
-                  {app.displayName ?? app.Component.name}
-                </NavLink>
-              </div>
+                {app.displayName ?? app.Component.name}
+              </NavLink>
             ),
           )}
 
           <div className={styles['nav-spacer']} />
 
-          <Footer />
+          <div className={styles['nav-item']}>
+            <Footer />
+          </div>
         </nav>
 
         <button className={styles['drawer-tab']} onClick={toggleDrawer}>
@@ -90,20 +90,22 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <Layout>
-        <NavigationApp />
-      </Layout>
+      <WithTitle title="Examples made with Three.js">
+        <Layout>
+          <NavigationApp />
+        </Layout>
+      </WithTitle>
     ),
   },
   ...apps.map(
     ({ Component, displayName }: App, index: number): RouteObject => ({
       path: `/examples/${index + 1}`,
       element: (
-        <Layout>
-          <WithTitle title={displayName}>
+        <WithTitle title={displayName}>
+          <Layout>
             <Component />
-          </WithTitle>
-        </Layout>
+          </Layout>
+        </WithTitle>
       ),
     }),
   ),
