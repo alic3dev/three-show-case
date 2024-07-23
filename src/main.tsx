@@ -1,26 +1,33 @@
-import type { NavLinkRenderProps, RouteObject } from 'react-router-dom'
+import type {
+  Location,
+  NavLinkRenderProps,
+  RouteObject,
+} from 'react-router-dom'
 
 import type { App } from '@/apps/types'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { PiDotsThreeVertical, PiHouseLineDuotone } from 'react-icons/pi'
-
 import {
   createBrowserRouter,
   NavLink,
   redirect,
   RouterProvider,
+  useLocation,
 } from 'react-router-dom'
+
 import { Analytics } from '@vercel/analytics/react'
 
 import { apps, NavigationApp } from '@/apps'
 
 import { Alic3 } from '@/components/Alic3'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Footer } from '@/components/Footer'
 import { WithTitle } from '@/components/WithTitle'
-import { Footer } from './components/Footer'
 
 import { addAmoLoaderToWindow } from '@/utils/ammoCompatHelper'
+import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { setAllRequiredPolyfills } from '@/utils/polyfills'
 
 import '@/main.scss'
@@ -31,20 +38,57 @@ setAllRequiredPolyfills()
 addAmoLoaderToWindow()
 
 export function Layout({ children }: React.PropsWithChildren): React.ReactNode {
-  const [sideOpen, setSideOpen] = React.useState<boolean>(true)
+  const location: Location = useLocation()
 
-  const toggleDrawer = (): void => {
-    setSideOpen((prevSideOpen: boolean): boolean => !prevSideOpen)
-  }
+  const [sideOpen, setSideOpen] = React.useState<boolean>((): boolean => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const localStorageValue = window.localStorage.getItem(
+        LOCAL_STORAGE_KEYS.drawerOpen,
+      )
 
-  const navLinkClassName = ({
-    isActive,
-    isPending,
-  }: NavLinkRenderProps): string => {
-    return `${styles['nav-item']} ${
-      isPending ? styles.pending : isActive ? styles.active : ''
-    }`
-  }
+      let parsedValue: unknown
+
+      if (localStorageValue) {
+        try {
+          parsedValue = JSON.parse(localStorageValue)
+        } catch {
+          /* Empty */
+        }
+      }
+
+      if (typeof parsedValue === 'boolean') {
+        return parsedValue
+      } else {
+        window.localStorage.removeItem(LOCAL_STORAGE_KEYS.drawerOpen)
+      }
+    }
+
+    return true
+  })
+
+  const toggleDrawer = React.useCallback((): void => {
+    setSideOpen((prevSideOpen: boolean): boolean => {
+      const newValue: boolean = !prevSideOpen
+
+      if (window.localStorage) {
+        window.localStorage.setItem(
+          LOCAL_STORAGE_KEYS.drawerOpen,
+          JSON.stringify(newValue),
+        )
+      }
+
+      return newValue
+    })
+  }, [])
+
+  const navLinkClassName = React.useCallback(
+    ({ isActive, isPending }: NavLinkRenderProps): string => {
+      return `${styles['nav-item']} ${
+        isPending ? styles.pending : isActive ? styles.active : ''
+      }`
+    },
+    [],
+  )
 
   return (
     <div className={styles.layout}>
@@ -81,7 +125,9 @@ export function Layout({ children }: React.PropsWithChildren): React.ReactNode {
         </button>
       </div>
 
-      <div className={styles.content}>{children}</div>
+      <div className={styles.content}>
+        <ErrorBoundary key={location.key}>{children}</ErrorBoundary>
+      </div>
     </div>
   )
 }
@@ -90,22 +136,26 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <WithTitle title="Examples made with Three.js">
-        <Layout>
-          <NavigationApp />
-        </Layout>
-      </WithTitle>
+      <ErrorBoundary>
+        <WithTitle title="Examples made with Three.js">
+          <Layout>
+            <NavigationApp />
+          </Layout>
+        </WithTitle>
+      </ErrorBoundary>
     ),
   },
   ...apps.map(
     ({ Component, displayName }: App, index: number): RouteObject => ({
       path: `/examples/${index + 1}`,
       element: (
-        <WithTitle title={displayName}>
-          <Layout>
-            <Component />
-          </Layout>
-        </WithTitle>
+        <ErrorBoundary>
+          <WithTitle title={displayName}>
+            <Layout>
+              <Component />
+            </Layout>
+          </WithTitle>
+        </ErrorBoundary>
       ),
     }),
   ),
