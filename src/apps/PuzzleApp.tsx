@@ -1,4 +1,5 @@
 import type { AppComponent } from '@/apps/types'
+
 import type { StatsRefObject } from '@/hooks/useStats'
 
 import React from 'react'
@@ -15,12 +16,12 @@ import { LoadingScreen } from '@/components/LoadingScreen'
 
 import { useStats } from '@/hooks/useStats'
 
-import * as objectUtils from '@/utils/objects'
 import { EventsManager } from '@/utils/EventsManager'
-
-import styles from '@/apps/StandardAppWithGrab.module.scss'
+import * as objectUtils from '@/utils/objects'
 
 import blobs from '@/data/blobs.json'
+
+import styles from '@/apps/StandardAppWithGrab.module.scss'
 
 export const displayName: string = 'Puzzle'
 
@@ -39,7 +40,6 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
     controls: OrbitControls
     composer: EffectComposer
     outlinePass: OutlinePass
-    statsRef: StatsRefObject
     objects: Record<string, THREE.Object3D>
     debugObjects: Record<string, THREE.Object3D>
     puzzlePieces: THREE.Group
@@ -389,7 +389,6 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
         controls,
         composer,
         outlinePass,
-        statsRef,
         objects: {
           mshFloor,
           rayFloor,
@@ -509,7 +508,7 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current!.statsRef.current.next()
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.debugObjects.grid.visible =
@@ -531,7 +530,7 @@ export const PuzzleApp: AppComponent = (): React.ReactElement => {
     const clock: THREE.Clock = new THREE.Clock()
 
     const animate: XRFrameRequestCallback = (): void => {
-      rendererProperties.current?.statsRef.current.stats.update()
+      statsRef.current.stats.update()
       rendererProperties.current?.controls.update(clock.getDelta())
 
       raycaster.setFromCamera(pointer, rendererProperties.current!.camera)

@@ -1,4 +1,7 @@
 import type { AppComponent } from '@/apps/types'
+
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import type { ChunkManagerOptions } from '@/utils/Chunks'
 
 import React from 'react'
@@ -11,14 +14,14 @@ import { Sky } from 'three/addons/objects/Sky.js'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
-import { Stats } from '@/utils/stats'
-import * as objectUtils from '@/utils/objects'
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
+import { useStats } from '@/hooks/useStats'
+
 import { Chunk, ChunkManager } from '@/utils/Chunks'
+import { EventsManager } from '@/utils/EventsManager'
+import * as objectUtils from '@/utils/objects'
+import { resolveAsset } from '@/utils/resolveAsset'
 
 import styles from '@/apps/StandardApp.module.scss'
-import { EventsManager } from '@/utils/EventsManager'
-import { resolveAsset } from '@/utils/resolveAsset'
 
 export const displayName: string = 'Ocean'
 
@@ -110,7 +113,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
   //     intensity: 25,
   //   },
   // })
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -126,7 +129,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
     objects: THREE.Object3D[]
     chunkManager: ChunkManager
     debugObjects: Record<string, THREE.Object3D>
-    stats: Stats
   }>()
 
   const [loadState, setLoadState] = React.useState<number>(0)
@@ -304,25 +306,9 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
         objects: [],
         chunkManager,
         debugObjects: { grid, axesLines },
-        stats: new Stats(),
       }
 
-      try {
-        const statsPanelValue: unknown = JSON.parse(
-          window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-        )
-
-        if (typeof statsPanelValue === 'number') {
-          statsPanel.current.value = statsPanelValue
-          rendererProperties.current.stats.showPanel(statsPanelValue)
-        }
-      } catch {
-        /* Empty */
-      }
-
-      rendererContainer.current.appendChild(
-        rendererProperties.current.stats.dom,
-      )
+      rendererContainer.current.appendChild(statsRef.current.stats.dom)
 
       for (const object of rendererProperties.current.objects) {
         rendererProperties.current.scene.add(object)
@@ -398,13 +384,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.debugObjects.grid.visible =
@@ -434,7 +414,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
     eventsManager.addWindowEvent('mouseup', onMouseUp)
 
     const animate: XRFrameRequestCallback = (): void => {
-      rendererProperties.current?.stats.update()
+      statsRef.current.stats.update()
 
       // rendererProperties.current?.camera.position.setX(
       //   rendererProperties.current?.camera.position.x - 4,
@@ -499,7 +479,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   return (
     <div className={styles.app}>

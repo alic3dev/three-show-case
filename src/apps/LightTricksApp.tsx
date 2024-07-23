@@ -1,18 +1,20 @@
 import type { AppComponent } from '@/apps/types'
 
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
+import { useStats } from '@/hooks/useStats'
+
+import { EventsManager } from '@/utils/EventsManager'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 
 import styles from '@/apps/StandardAppWithGrab.module.scss'
-import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Light Tricks'
 
@@ -32,7 +34,7 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
       intensity: 25,
     },
   })
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -42,7 +44,6 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
     scene: THREE.Scene
     camera: THREE.PerspectiveCamera
     controls: OrbitControls
-    stats: Stats
     objects: Record<string, THREE.Object3D>
     ambientLight: THREE.AmbientLight
     lights: THREE.Light[]
@@ -276,28 +277,12 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
         scene,
         camera,
         controls,
-        stats: new Stats(),
         objects: { walls, grid, xLine, yLine, zLine },
         ambientLight,
         lights,
       }
 
-      try {
-        const statsPanelValue: unknown = JSON.parse(
-          window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-        )
-
-        if (typeof statsPanelValue === 'number') {
-          statsPanel.current.value = statsPanelValue
-          rendererProperties.current.stats.showPanel(statsPanelValue)
-        }
-      } catch {
-        /* Empty */
-      }
-
-      rendererContainer.current.appendChild(
-        rendererProperties.current.stats.dom,
-      )
+      rendererContainer.current.appendChild(statsRef.current.stats.dom)
 
       for (const objectName in rendererProperties.current.objects) {
         rendererProperties.current.scene.add(
@@ -376,13 +361,7 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.objects.grid.visible =
@@ -422,7 +401,7 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
 
     const clock: THREE.Clock = new THREE.Clock()
     const animate: XRFrameRequestCallback = (): void => {
-      rendererProperties.current?.stats.update()
+      statsRef.current.stats.update()
 
       const delta: number = clock.getDelta()
 
@@ -492,7 +471,7 @@ export const LightTricksApp: AppComponent = (): React.ReactElement => {
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   return (
     <div className={styles.app}>

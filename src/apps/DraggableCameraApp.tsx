@@ -1,18 +1,20 @@
 import type { AppComponent } from '@/apps/types'
 
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
+import { useStats } from '@/hooks/useStats'
+
+import { EventsManager } from '@/utils/EventsManager'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
 import styles from '@/apps/StandardAppWithGrab.module.scss'
-import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Draggable Camera'
 
@@ -22,7 +24,7 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
   }>({
     speed: { cube: 0.01, pointLights: 0.01 },
   })
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -31,7 +33,6 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
   const rendererProperties = React.useRef<{
     scene: THREE.Scene
     camera: THREE.PerspectiveCamera
-    stats: Stats
     objects: Record<string, THREE.Object3D>
     ambientLight: THREE.AmbientLight
     pointLights: THREE.PointLight[]
@@ -182,7 +183,6 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
           0.1,
           1000,
         ),
-        stats: new Stats(),
         objects: { mshFloor, cube, grid, xLine, yLine, zLine },
         ambientLight,
         pointLights: [
@@ -195,19 +195,6 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
         ],
       }
 
-      try {
-        const statsPanelValue = JSON.parse(
-          window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-        )
-
-        if (typeof statsPanelValue === 'number') {
-          statsPanel.current.value = statsPanelValue
-          rendererProperties.current.stats.showPanel(statsPanelValue)
-        }
-      } catch {
-        /* Empty */
-      }
-
       rendererProperties.current.camera.position.set(2, 5, 5)
       rendererProperties.current.camera.lookAt(0, 3, 0)
 
@@ -218,9 +205,7 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
       controls.target.set(0, 3, 0)
       controls.update()
 
-      rendererContainer.current.appendChild(
-        rendererProperties.current.stats.dom,
-      )
+      rendererContainer.current.appendChild(statsRef.current.stats.dom)
 
       for (const pointLight of rendererProperties.current.pointLights) {
         pointLight.castShadow = true
@@ -282,13 +267,7 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.objects.grid.visible =
@@ -322,7 +301,7 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
     eventsManager.addWindowEvent('mouseup', onMouseUp)
 
     const animate: XRFrameRequestCallback = (): void => {
-      rendererProperties.current?.stats.update()
+      statsRef.current.stats.update()
 
       rendererProperties.current!.objects.cube.rotation.x +=
         settings.current.speed.cube
@@ -374,7 +353,7 @@ export const DraggableCameraApp: AppComponent = (): React.ReactElement => {
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   return (
     <div className={styles.app}>

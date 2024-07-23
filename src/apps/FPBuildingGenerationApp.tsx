@@ -1,22 +1,26 @@
 import type { AppComponent } from '@/apps/types'
+
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import type { Room } from '@/utils/rooms'
 
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { Stats } from '@/utils/stats'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
+import { useStats } from '@/hooks/useStats'
+
 import { AmmoHelper } from '@/utils/ammo/AmmoHelper'
-import { EventsManager } from '@/utils/EventsManager'
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
-import { generateBuildingLayout } from '@/utils/rooms'
+
 import { randomColor } from '@/utils/colors'
+import { EventsManager } from '@/utils/EventsManager'
+import { resolveAsset } from '@/utils/resolveAsset'
+import { generateBuildingLayout } from '@/utils/rooms'
 
 import styles from '@/apps/StandardApp.module.scss'
-import { resolveAsset } from '@/utils/resolveAsset'
 
 export const displayName: string = 'First Person Building Generation'
 
@@ -25,7 +29,7 @@ const ROOM_SIZE: number = 30
 export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
   const [loadState, setLoadState] = React.useState<number>(0)
 
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -34,7 +38,6 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
   const rendererProperties = React.useRef<{
     scene: THREE.Scene
     camera: THREE.PerspectiveCamera
-    stats: Stats
     objects: Record<string, THREE.Object3D>
     debugObjects: Record<string, THREE.Object3D>
     ambientLight: THREE.AmbientLight
@@ -614,7 +617,6 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
         rendererProperties.current = {
           scene,
           camera,
-          stats: new Stats(),
           objects: {
             rooms,
           },
@@ -629,22 +631,7 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
           mouseLocked: false,
         }
 
-        try {
-          const statsPanelValue = JSON.parse(
-            window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-          )
-
-          if (typeof statsPanelValue === 'number') {
-            statsPanel.current.value = statsPanelValue
-            rendererProperties.current.stats.showPanel(statsPanelValue)
-          }
-        } catch {
-          /* Empty */
-        }
-
-        rendererContainer.current!.appendChild(
-          rendererProperties.current.stats.dom,
-        )
+        rendererContainer.current!.appendChild(statsRef.current.stats.dom)
 
         for (const objectName in rendererProperties.current.objects) {
           rendererProperties.current.objects[objectName].castShadow = true
@@ -710,13 +697,7 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
               })
               break
             case 's':
-              rendererProperties.current?.stats.showPanel(
-                ++statsPanel.current.value % 4,
-              )
-              window.localStorage.setItem(
-                LOCAL_STORAGE_KEYS.statsPanel,
-                JSON.stringify(statsPanel.current.value % 4),
-              )
+              statsRef.current.next()
               break
             case 'g':
               rendererProperties.current!.debugObjects.grid.visible =
@@ -807,7 +788,7 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
         const animate: XRFrameRequestCallback = (): void => {
           const MOVEMENT_SPEED: number = heldKeys['shift'] ? 0.5 : 0.2
 
-          rendererProperties.current?.stats.update()
+          statsRef.current.stats.update()
 
           if (heldKeys['ArrowUp'] || heldKeys['w']) {
             playerObject.translateZ(-MOVEMENT_SPEED)
@@ -880,7 +861,7 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
       resizeObserver?.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   React.useEffect((): void | (() => void) => {
     // TODO: This should probably be an element in THREE rather than a seperate canvas

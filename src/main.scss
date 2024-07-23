@@ -126,6 +126,17 @@ body {
 
   transform: translate(-50%, -50%);
 }
+
+.three-stats-panel {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+
+  cursor: pointer;
+
+  opacity: 0.9;
+
+  z-index: 10000;
 }
 
 a {

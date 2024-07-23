@@ -1,22 +1,24 @@
 import type { AppComponent } from '@/apps/types'
 
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
+import { useStats } from '@/hooks/useStats'
+
+import { EventsManager } from '@/utils/EventsManager'
 
 import styles from '@/apps/StandardAppWithGrab.module.scss'
-import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Bouncing Physics'
 
 export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -25,7 +27,6 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
   const rendererProperties = React.useRef<{
     scene: THREE.Scene
     camera: THREE.PerspectiveCamera
-    stats: Stats
     objects: Record<string, THREE.Object3D>
     ambientLight: THREE.AmbientLight
     pointLights: THREE.Light[]
@@ -378,26 +379,12 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
         rendererProperties.current = {
           scene,
           camera,
-          stats: new Stats(),
           objects: { mshFloor, grid, xLine, yLine, zLine },
           ambientLight,
           pointLights,
         }
 
         rendererProperties.current.scene.add(...spheres)
-
-        try {
-          const statsPanelValue = JSON.parse(
-            window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-          )
-
-          if (typeof statsPanelValue === 'number') {
-            statsPanel.current.value = statsPanelValue
-            rendererProperties.current.stats.showPanel(statsPanelValue)
-          }
-        } catch {
-          /* Empty */
-        }
 
         const controls = new OrbitControls(
           rendererProperties.current.camera,
@@ -406,9 +393,7 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
         controls.target.set(0, 0, 0)
         controls.update()
 
-        rendererContainer.current!.appendChild(
-          rendererProperties.current.stats.dom,
-        )
+        rendererContainer.current!.appendChild(statsRef.current.stats.dom)
 
         for (const objectName in rendererProperties.current.objects) {
           rendererProperties.current.objects[objectName].castShadow = true
@@ -460,7 +445,7 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
 
         const clock = new THREE.Clock()
         const animate: XRFrameRequestCallback = (): void => {
-          rendererProperties.current?.stats.update()
+          statsRef.current.stats.update()
 
           const deltaTime: number = clock.getDelta()
           updatePhysics(deltaTime)
@@ -514,13 +499,7 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.objects.grid.visible =
@@ -563,7 +542,7 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   return (
     <div className={styles.app}>
