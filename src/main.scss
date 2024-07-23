@@ -118,7 +118,14 @@ body {
 }
 
 #webglmessage {
-  margin: auto !important;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  margin: 0 !important;
+
+  transform: translate(-50%, -50%);
+}
 }
 
 a {
