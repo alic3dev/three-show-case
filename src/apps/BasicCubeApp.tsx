@@ -1,20 +1,22 @@
 import type { AppComponent } from '@/apps/types'
 
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL.js'
-import { Stats } from '@/utils/stats'
 
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
+import { useStats } from '@/hooks/useStats'
+
+import { EventsManager } from '@/utils/EventsManager'
 
 import styles from '@/apps/StandardApp.module.scss'
-import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Basic Cube'
 
 export const BasicCube: AppComponent = (): React.ReactElement => {
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -24,7 +26,6 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
     scene: THREE.Scene
     camera: THREE.PerspectiveCamera
     objects: Record<string, THREE.Object3D>
-    stats: Stats
   }>()
 
   React.useEffect((): (() => void) | void => {
@@ -100,26 +101,10 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
           0.1,
           1000,
         ),
-        stats: new Stats(),
         objects: { cube, xLine, yLine, zLine, grid },
       }
 
-      try {
-        const statsPanelValue = JSON.parse(
-          window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-        )
-
-        if (typeof statsPanelValue === 'number') {
-          statsPanel.current.value = statsPanelValue
-          rendererProperties.current.stats.showPanel(statsPanelValue)
-        }
-      } catch {
-        /* Empty */
-      }
-
-      rendererContainer.current.appendChild(
-        rendererProperties.current.stats.dom,
-      )
+      rendererContainer.current.appendChild(statsRef.current.stats.dom)
 
       rendererProperties.current.camera.position.set(0, 2, 5)
       rendererProperties.current.camera.lookAt(0, 0, 0)
@@ -167,13 +152,7 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.objects.grid.visible =
@@ -199,7 +178,7 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
     const animate: XRFrameRequestCallback = (
       time: DOMHighResTimeStamp,
     ): void => {
-      rendererProperties.current?.stats.update()
+      statsRef.current.stats.update()
 
       const posVal: number = Math.sin(((time / 3000) * Math.PI) / 2) * 3
       rendererProperties.current!.camera.position.x = posVal
@@ -222,7 +201,7 @@ export const BasicCube: AppComponent = (): React.ReactElement => {
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   return (
     <div className={styles.app}>

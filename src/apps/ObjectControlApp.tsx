@@ -1,16 +1,18 @@
 import type { AppComponent } from '@/apps/types'
 
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
+import { useStats } from '@/hooks/useStats'
+
+import { EventsManager } from '@/utils/EventsManager'
 
 import styles from '@/apps/StandardApp.module.scss'
-import { EventsManager } from '@/utils/EventsManager'
 
 export const displayName: string = 'Controlling an Object'
 
@@ -20,7 +22,7 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
   }>({
     speed: { cube: 0.2, camera: 0.01 },
   })
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const [heldKeys, _setHeldKeys] = React.useState<Record<string, number>>({})
   const heldKeysRef = React.useRef<{ value: Record<string, number> }>({
@@ -53,7 +55,6 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
   const rendererProperties = React.useRef<{
     scene: THREE.Scene
     camera: THREE.PerspectiveCamera
-    stats: Stats
     objects: Record<string, THREE.Object3D>
     ambientLight: THREE.AmbientLight
     pointLights: THREE.PointLight[]
@@ -182,28 +183,12 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
       rendererProperties.current = {
         scene,
         camera,
-        stats: new Stats(),
         objects: { mshFloor, cube, grid, xLine, yLine, zLine },
         ambientLight,
         pointLights,
       }
 
-      try {
-        const statsPanelValue = JSON.parse(
-          window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-        )
-
-        if (typeof statsPanelValue === 'number') {
-          statsPanel.current.value = statsPanelValue
-          rendererProperties.current.stats.showPanel(statsPanelValue)
-        }
-      } catch {
-        /* Empty */
-      }
-
-      rendererContainer.current.appendChild(
-        rendererProperties.current.stats.dom,
-      )
+      rendererContainer.current.appendChild(statsRef.current.stats.dom)
 
       scene.add(ambientLight)
       scene.add(...rendererProperties.current.pointLights)
@@ -250,7 +235,7 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
     const animate: XRFrameRequestCallback = (
       time: DOMHighResTimeStamp,
     ): void => {
-      rendererProperties.current?.stats.update()
+      statsRef.current.stats.update()
 
       const posXVal: number =
         Math.sin(
@@ -322,7 +307,7 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
 
       resizeObserver.disconnect()
     }
-  }, [])
+  }, [statsRef])
 
   React.useEffect((): (() => void) | void => {
     const eventsManager: EventsManager = new EventsManager()
@@ -345,13 +330,7 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.objects.grid.visible =
@@ -386,7 +365,7 @@ export const ObjectControlApp: AppComponent = (): React.ReactElement => {
     return (): void => {
       eventsManager.removeAllEvents()
     }
-  }, [heldKeys])
+  }, [heldKeys, statsRef])
 
   const onMouseDownMovement =
     (direction: 'up' | 'down' | 'left' | 'right'): (() => void) =>

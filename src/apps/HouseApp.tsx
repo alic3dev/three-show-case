@@ -2,11 +2,14 @@
 
 import type { AppComponent } from '@/apps/types'
 
+import type { StatsRefObject } from '@/hooks/useStats'
+
+import type { PolyHavenTextureResult } from '@/utils/polyHavenLoader'
+
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 // import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
@@ -14,10 +17,11 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
-import * as objectUtils from '@/utils/objects'
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
-import { loadPolyHavenTexture } from '@/utils/polyHavenLoader'
+import { useStats } from '@/hooks/useStats'
+
 import { EventsManager } from '@/utils/EventsManager'
+import * as objectUtils from '@/utils/objects'
+import { loadPolyHavenTexture } from '@/utils/polyHavenLoader'
 import { resolveAsset } from '@/utils/resolveAsset'
 
 import styles from '@/apps/StandardApp.module.scss'
@@ -25,7 +29,7 @@ import styles from '@/apps/StandardApp.module.scss'
 export const displayName: string = 'House'
 
 export const HouseApp: AppComponent = (): React.ReactElement => {
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -36,7 +40,6 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
     camera: THREE.PerspectiveCamera
     ambientLight: THREE.AmbientLight
     debugObjects: Record<string, THREE.Object3D>
-    stats: Stats
   }>()
 
   const [loadState, setLoadState] = React.useState<number>(0)
@@ -140,16 +143,15 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
 
       scene.add(floorMesh)
 
-      const wallMaterialTextures = loadPolyHavenTexture({
-        name: 'beige_wall_001',
-        ambient: 'rough',
-        repeats: new THREE.Vector2(1, 1),
-        incrementLoadState,
-      })
+      const wallMaterialTextures: PolyHavenTextureResult = loadPolyHavenTexture(
+        {
+          name: 'beige_wall_001',
+          incrementLoadState,
+        },
+      )
 
       const wallGeometry = new THREE.BoxGeometry(1, 50, 100)
       const wallMaterial = new THREE.MeshPhongMaterial({
-        // color: 0xffffff,
         ...wallMaterialTextures,
       })
 
@@ -432,25 +434,9 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
         camera,
         ambientLight,
         debugObjects: { grid, axesLines },
-        stats: new Stats(),
       }
 
-      try {
-        const statsPanelValue: unknown = JSON.parse(
-          window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-        )
-
-        if (typeof statsPanelValue === 'number') {
-          statsPanel.current.value = statsPanelValue
-          rendererProperties.current.stats.showPanel(statsPanelValue)
-        }
-      } catch {
-        /* Empty */
-      }
-
-      rendererContainer.current.appendChild(
-        rendererProperties.current.stats.dom,
-      )
+      rendererContainer.current.appendChild(statsRef.current.stats.dom)
 
       for (const objectName in rendererProperties.current.debugObjects) {
         rendererProperties.current.scene.add(
@@ -513,13 +499,7 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.debugObjects.grid.visible =
@@ -541,7 +521,7 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
     const cameraSpeed: number = 0.3
 
     const animate: XRFrameRequestCallback = (): void => {
-      rendererProperties.current?.stats.update()
+      statsRef.current.stats.update()
 
       if (heldKeys['w']) {
         rendererProperties.current?.camera.translateZ(-cameraSpeed)
@@ -584,7 +564,7 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   return (
     <div className={styles.app}>

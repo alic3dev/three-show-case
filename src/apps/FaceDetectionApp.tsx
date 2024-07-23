@@ -1,10 +1,11 @@
 import type { AppComponent } from '@/apps/types'
 
+import type { StatsRefObject } from '@/hooks/useStats'
+
 import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { Stats } from '@/utils/stats'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection'
@@ -13,13 +14,16 @@ import '@tensorflow-models/face-detection'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
+import { useStats } from '@/hooks/useStats'
+
 import { EventsManager } from '@/utils/EventsManager'
 import * as objectUtils from '@/utils/objects'
-import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 
 import styles from '@/apps/StandardApp.module.scss'
 
 export const displayName: string = 'Face Detection'
+
+// FIXME: Dispose video stream on destruct
 
 const TRIANGULATION = [
   127, 34, 139, 11, 0, 37, 232, 231, 120, 72, 37, 39, 128, 121, 47, 232, 121,
@@ -231,7 +235,7 @@ function distance(a: number[], b: number[]) {
 }
 
 export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
-  const statsPanel = React.useRef<{ value: number }>({ value: 0 })
+  const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
 
@@ -244,7 +248,6 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
     faceMesh: THREE.Mesh
     faceWireLineSegments?: THREE.LineSegments
     debugObjects: Record<string, THREE.Object3D>
-    stats: Stats
   }>()
 
   const videoRef = React.useRef<HTMLVideoElement>(null)
@@ -757,25 +760,9 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
         ambientLight,
         faceMesh,
         debugObjects: { grid, axesLines },
-        stats: new Stats(),
       }
 
-      try {
-        const statsPanelValue: unknown = JSON.parse(
-          window.localStorage.getItem(LOCAL_STORAGE_KEYS.statsPanel) || '0',
-        )
-
-        if (typeof statsPanelValue === 'number') {
-          statsPanel.current.value = statsPanelValue
-          rendererProperties.current.stats.showPanel(statsPanelValue)
-        }
-      } catch {
-        /* Empty */
-      }
-
-      rendererContainer.current.appendChild(
-        rendererProperties.current.stats.dom,
-      )
+      rendererContainer.current.appendChild(statsRef.current.stats.dom)
 
       for (const objectName in rendererProperties.current.debugObjects) {
         rendererProperties.current.scene.add(
@@ -845,13 +832,7 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
 
       switch (ev.key.toLowerCase()) {
         case 's':
-          rendererProperties.current?.stats.showPanel(
-            ++statsPanel.current.value % 4,
-          )
-          window.localStorage.setItem(
-            LOCAL_STORAGE_KEYS.statsPanel,
-            JSON.stringify(statsPanel.current.value % 4),
-          )
+          statsRef.current.next()
           break
         case 'g':
           rendererProperties.current!.debugObjects.grid.visible =
@@ -873,7 +854,7 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
     const animate: XRFrameRequestCallback = (): void => {
       if (!renderer.current) return
 
-      rendererProperties.current?.stats.update()
+      statsRef.current.stats.update()
 
       if (heldKeys['w']) {
         rendererProperties.current?.faceMesh.translateZ(0.01)
@@ -942,7 +923,7 @@ export const FaceDetectionApp: AppComponent = (): React.ReactElement => {
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
     }
-  }, [])
+  }, [statsRef])
 
   return (
     <div className={styles.app}>

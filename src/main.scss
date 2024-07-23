@@ -70,13 +70,15 @@
     @include set-flavor-colors('frappe');
   }
 
-  --box-shadow-item: 0px 2px 4px rgba(var(--color-black-raw), 0.3);
-  --box-shadow-item-light: 0px 2px 4px rgba(var(--color-black-raw), 0.05);
-  --box-shadow-item-inverted: 0px -2px 4px rgba(var(--color-black-raw), 0.3);
-  --box-shadow-item-light-inverted: 0px -2px 4px rgba(var(--color-black-raw), 0.05);
+  & {
+    --box-shadow-item: 0px 2px 4px rgba(var(--color-black-raw), 0.3);
+    --box-shadow-item-light: 0px 2px 4px rgba(var(--color-black-raw), 0.05);
+    --box-shadow-item-inverted: 0px -2px 4px rgba(var(--color-black-raw), 0.3);
+    --box-shadow-item-light-inverted: 0px -2px 4px rgba(var(--color-black-raw), 0.05);
 
-  --border-radius-item: 10px;
-  --border-radius-item-half: 5px;
+    --border-radius-item: 10px;
+    --border-radius-item-half: 5px;
+  }
 }
 
 :root,
@@ -116,7 +118,25 @@ body {
 }
 
 #webglmessage {
-  margin: auto !important;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  margin: 0 !important;
+
+  transform: translate(-50%, -50%);
+}
+
+.three-stats-panel {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+
+  cursor: pointer;
+
+  opacity: 0.9;
+
+  z-index: 10000;
 }
 
 a {
