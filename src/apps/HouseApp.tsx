@@ -144,15 +144,14 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
       scene.add(floorMesh)
 
       const wallMaterialTextures: PolyHavenTextureResult = loadPolyHavenTexture(
-        name: 'beige_wall_001',
-        ambient: 'rough',
-        repeats: new THREE.Vector2(1, 1),
-        incrementLoadState,
-      })
+        {
+          name: 'beige_wall_001',
+          incrementLoadState,
+        },
+      )
 
       const wallGeometry = new THREE.BoxGeometry(1, 50, 100)
       const wallMaterial = new THREE.MeshPhongMaterial({
-        // color: 0xffffff,
         ...wallMaterialTextures,
       })
 
