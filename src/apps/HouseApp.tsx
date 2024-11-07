@@ -1,4 +1,4 @@
-// import type { GLTF } from 'three/addons/loaders/GLTFLoader.js'
+import type { GLTF } from 'three/addons/loaders/GLTFLoader.js'
 
 import type { AppComponent } from '@/apps/types'
 
@@ -12,7 +12,7 @@ import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-// import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
@@ -86,13 +86,13 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
         0.1,
         2000,
       )
-      camera.position.set(0, 10, 4)
-      camera.lookAt(0, 10, 0)
+      camera.position.set(0, 20, 4)
+      camera.lookAt(0, 20, 0)
 
       const controls = new OrbitControls(camera, renderer.current.domElement)
       controls.minDistance = 2
       controls.maxDistance = 10
-      controls.target.set(0, 10, 0)
+      controls.target.set(0, 20, 0)
       controls.update()
 
       const axesLines: THREE.AxesHelper =
@@ -122,7 +122,6 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
           texture.mapping = THREE.EquirectangularReflectionMapping
 
           scene.background = texture
-          scene.environment = texture
 
           incrementLoadState()
         },
@@ -130,10 +129,10 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
 
       const floorGeometry = new THREE.BoxGeometry(100, 1, 100)
       const floorMaterial = new THREE.MeshPhongMaterial({
-        // color: 0xffffff,
         ...loadPolyHavenTexture({
           name: 'dark_wooden_planks',
-          repeats: new THREE.Vector2(10, 10),
+          ambient: 'arm',
+          repeats: 10,
           incrementLoadState,
         }),
       })
@@ -178,7 +177,6 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
       scene.add(ceilingMesh)
 
       const wallWithWindowsGeometry = new THREE.BufferGeometry()
-
       wallWithWindowsGeometry.setFromPoints([
         new THREE.Vector3(-50, 0, 0),
         new THREE.Vector3(-50, 0, 1),
@@ -229,29 +227,37 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
         new THREE.Vector3(-50, 0, 0),
       ])
 
-      // FIXME: Need UVs for texture
+      const uvs: Float32Array = new Float32Array([
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
 
-      // const quad_uvs = [
-      //   0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
-      //   0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-      //   1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-      //   1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-      // ]
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
 
-      // const quad_indices = [0, 2, 1, 0, 3, 2]
-      // // Each vertex has one uv coordinate for texture mapping
-      // const uvs = new Float32Array(quad_uvs)
-      // // Use the four vertices to draw the two triangles that make up the square.
-      // const indices = new Uint32Array(quad_indices)
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
 
-      // wallWithWindowsGeometry.setAttribute(
-      //   'uv',
-      //   new THREE.BufferAttribute(uvs, 2),
-      // )
-      // wallWithWindowsGeometry.setIndex(new THREE.BufferAttribute(indices, 1))
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+
+        0.0, 0.0, 0.0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+      ])
+
+      wallWithWindowsGeometry.setAttribute(
+        'uv',
+        new THREE.BufferAttribute(
+          uvs.map((v: number, i: number): number =>
+            i % 2 === 0 ? Math.abs(1 - v) : v,
+          ),
+          2,
+        ),
+      )
+
+      wallWithWindowsGeometry.computeVertexNormals()
 
       const wallNorthMaterial = new THREE.MeshPhongMaterial({
-        // color: 0xffffff,
         ...wallMaterialTextures,
         side: THREE.DoubleSide,
         flatShading: true,
@@ -375,11 +381,54 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
         ),
       ])
 
+      const wallTrimGeometryUvs: Float32Array = new Float32Array([
+        1, 0.5, 1, 0, 0, 0,
+
+        0, 0, 0, 0.5, 1, 0.5,
+
+        1, 0.5, 1, 0.625, 0, 0.625,
+
+        0, 0.625, 0, 0.5, 1, 0.5,
+
+        0, 0.625, 0, 0.75, 1, 0.75,
+
+        1, 0.75, 1, 0.625, 0, 0.625,
+
+        0, 0.75, 0, 0.875, 1, 0.875,
+
+        1, 0.875, 1, 0.75, 0, 0.75,
+
+        0, 0.875, 0, 1, 1, 1,
+
+        1, 1, 1, 0.875, 0, 0.875,
+      ])
+
+      wallTrimGeometry.setAttribute(
+        'uv',
+        new THREE.BufferAttribute(
+          wallTrimGeometryUvs.map((v: number, i: number): number =>
+            i % 2 === 0 ? Math.abs(1 - v) : v,
+          ),
+          2,
+        ),
+      )
+
+      const wallTrimTextures: PolyHavenTextureResult = {
+        aoMap: wallMaterialTextures.aoMap.clone(),
+        map: wallMaterialTextures.map.clone(),
+        normalMap: wallMaterialTextures.normalMap.clone(),
+      }
+
+      for (const textureType in wallTrimTextures) {
+        wallTrimTextures[
+          textureType as keyof PolyHavenTextureResult
+        ].repeat.set(1, 0.2)
+      }
+
       const wallTrimMaterial = new THREE.MeshPhongMaterial({
-        color: 0xffffff,
         emissive: 0xffffff,
-        emissiveIntensity: 0.05,
-        ...wallMaterialTextures,
+        emissiveIntensity: 0.025,
+        ...wallTrimTextures,
         side: THREE.DoubleSide,
         flatShading: true,
       })
@@ -428,6 +477,47 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
       )
 
       scene.add(wallTrimEastMesh)
+
+      new GLTFLoader().load(
+        resolveAsset(
+          'models/fancy_picture_frame_01_4k.gltf/fancy_picture_frame_01_4k.gltf',
+        ),
+        function (gltf: GLTF) {
+          const scale: number = 30
+          gltf.scene.scale.set(scale, scale, scale)
+
+          gltf.scene.position.set(0, 25, -48)
+
+          scene.add(gltf.scene)
+
+          incrementLoadState()
+        },
+        undefined,
+        function (error) {
+          console.error(error)
+        },
+      )
+
+      new GLTFLoader().load(
+        resolveAsset(
+          'models/steel_frame_shelves_03_4k.gltf/steel_frame_shelves_03_4k.gltf',
+        ),
+        function (gltf: GLTF) {
+          const scale: number = 10
+          gltf.scene.scale.set(scale, scale, scale)
+
+          gltf.scene.position.set(34, 0.5, -44)
+          gltf.scene.rotateY(-0.0125)
+
+          scene.add(gltf.scene)
+
+          incrementLoadState()
+        },
+        undefined,
+        function (error) {
+          console.error(error)
+        },
+      )
 
       rendererProperties.current = {
         scene,
@@ -570,7 +660,7 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
     <div className={styles.app}>
       <div ref={rendererContainer} className={styles.container}></div>
 
-      <LoadingScreen loading={loadState < 4} delay={0} />
+      <LoadingScreen loading={loadState < 5} delay={0} />
     </div>
   )
 }

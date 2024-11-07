@@ -45,7 +45,14 @@ import {
   HouseApp,
   displayName as fifthteenthDisplayName,
 } from '@/apps/HouseApp'
+import { CityApp, displayName as sixthteenthDisplayName } from '@/apps/CityApp'
+import {
+  HallsApp,
+  displayName as seventeenthDisplayName,
+} from '@/apps/HallsApp'
 import { RVAApp, displayName as eighteenthDisplayName } from '@/apps/RVAApp'
+import { GustsApp, displayName as nineteenthDisplayName } from '@/apps/GustsApp'
+import { CHOApp, displayName as twentiethDisplayName } from '@/apps/CHOApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
@@ -63,7 +70,11 @@ export const apps: App[] = [
   { Component: FluidApp, displayName: thirteenthDisplayName },
   { Component: FaceDetectionApp, displayName: fourteenthDisplayName },
   { Component: HouseApp, displayName: fifthteenthDisplayName },
+  { Component: CityApp, displayName: sixthteenthDisplayName },
+  { Component: HallsApp, displayName: seventeenthDisplayName },
   { Component: RVAApp, displayName: eighteenthDisplayName },
+  { Component: GustsApp, displayName: nineteenthDisplayName },
+  { Component: CHOApp, displayName: twentiethDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'

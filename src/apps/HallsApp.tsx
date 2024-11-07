@@ -12,8 +12,8 @@ import React from 'react'
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
-import { Water } from 'three/addons/objects/Water.js'
-import { Sky } from 'three/addons/objects/Sky.js'
+import { RGBELoader } from 'three/addons/loaders/RGBELoader'
+// import { GLTFLoader } from 'three/addons/loaders/GLTFLoader'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
@@ -25,12 +25,32 @@ import * as objectUtils from '@/utils/objects'
 import { resolveAsset } from '@/utils/resolveAsset'
 
 import styles from '@/apps/StandardApp.module.scss'
+import {
+  loadPolyHavenTexture,
+  PolyHavenTextureResult,
+} from '@/utils/polyHavenLoader'
 
-export const displayName: string = '🩸'
+export const displayName: string = 'Halls'
+
+function generateHalls(
+  location: THREE.Vector3,
+  chunkSize: number,
+): THREE.Vector2[] {
+  const halls: THREE.Vector2[] = []
+
+  if (location.y !== 0) return halls
+
+  for (let i: number = 0; i < chunkSize; i++) {
+    halls.push(new THREE.Vector2(Math.random(), Math.random()))
+  }
+
+  return halls
+}
 
 const generateChunkMethod: GenerateChunkMethod = function generateChunkMethod({
   location,
   options,
+  cacheManager,
 }: GenerateChunkMethodParams): Chunk {
   const positionOffset: THREE.Vector3 = new THREE.Vector3(
     location.x * options.CHUNK_SIZE,
@@ -41,18 +61,93 @@ const generateChunkMethod: GenerateChunkMethod = function generateChunkMethod({
   const objects: THREE.Group = new THREE.Group()
 
   if (location.y === 0) {
-    const geoFloor: THREE.BoxGeometry = new THREE.BoxGeometry(
-      options.CHUNK_SIZE,
-      1,
-      options.CHUNK_SIZE,
+    const a = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 100, 1),
+      new THREE.MeshBasicMaterial({ color: 0x04a245 }),
     )
-    const mshFloor: THREE.Mesh = new THREE.Mesh(geoFloor, options.matFloor)
 
+    objects.add(a)
+
+    const floorCacheKey: string = `floor:${options.CHUNK_SIZE}`
+    const floorMaterial: THREE.Material = cacheManager.getMaterial(
+      floorCacheKey,
+      (): THREE.Material => {
+        const floorTextures: PolyHavenTextureResult =
+          cacheManager.getPolyHavenTexture(
+            floorCacheKey,
+            (): PolyHavenTextureResult => {
+              return loadPolyHavenTexture({
+                name: 'marble_01',
+                repeats: options.CHUNK_SIZE / 4,
+              })
+            },
+          )
+
+        return new THREE.MeshPhongMaterial({
+          color: 0xffffff,
+          ...floorTextures,
+        })
+      },
+    )
+
+    const floorGeometry: THREE.BufferGeometry = cacheManager.getGeometry(
+      floorCacheKey,
+      (): THREE.BufferGeometry => {
+        return new THREE.BoxGeometry(options.CHUNK_SIZE, 1, options.CHUNK_SIZE)
+      },
+    )
+
+    const mshFloor: THREE.Mesh = new THREE.Mesh(floorGeometry, floorMaterial)
     mshFloor.position.set(0, -0.5, 0)
-
     mshFloor.receiveShadow = true
 
     objects.add(mshFloor)
+  }
+
+  const halls: THREE.Vector2[] = generateHalls(location, options.CHUNK_SIZE)
+
+  for (const hall of halls) {
+    const hallFloorCacheKey: string = `hall:floor:${options.CHUNK_SIZE}`
+    const hallFloorMaterial: THREE.Material = cacheManager.getMaterial(
+      hallFloorCacheKey,
+      (): THREE.Material => {
+        const hallFloorTextures: PolyHavenTextureResult =
+          cacheManager.getPolyHavenTexture(
+            hallFloorCacheKey,
+            (): PolyHavenTextureResult => {
+              return loadPolyHavenTexture({
+                name: 'cobblestone_floor_04',
+                repeats: 1,
+              })
+            },
+          )
+
+        return new THREE.MeshPhongMaterial({
+          color: 0xffffff,
+          ...hallFloorTextures,
+        })
+      },
+    )
+
+    const hallFloorGeometry: THREE.BufferGeometry = cacheManager.getGeometry(
+      hallFloorCacheKey,
+      (): THREE.BufferGeometry => {
+        return new THREE.BoxGeometry(1, 1, 1)
+      },
+    )
+
+    const hallFloorMesh: THREE.Mesh = new THREE.Mesh(
+      hallFloorGeometry,
+      hallFloorMaterial,
+    )
+    hallFloorMesh.position.set(
+      hall.x * options.CHUNK_SIZE,
+      0,
+      hall.y * options.CHUNK_SIZE,
+    )
+    hallFloorMesh.receiveShadow = true
+
+    objects.add(hallFloorMesh)
   }
 
   objects.position.add(positionOffset)
@@ -60,7 +155,7 @@ const generateChunkMethod: GenerateChunkMethod = function generateChunkMethod({
   return new Chunk({ location, objects })
 }
 
-export const FluidApp: AppComponent = (): React.ReactElement => {
+export const HallsApp: AppComponent = (): React.ReactElement => {
   const statsRef: StatsRefObject = useStats()
 
   const webGLSupported = React.useRef<{ value: boolean }>({ value: true })
@@ -70,16 +165,17 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
   const rendererProperties = React.useRef<{
     scene: THREE.Scene
     camera: THREE.PerspectiveCamera
-    sky: Sky
-    water: Water
-    ambientLight: THREE.AmbientLight
-    sunLight: THREE.Light
     objects: THREE.Object3D[]
     chunkManager: ChunkManager
     debugObjects: Record<string, THREE.Object3D>
   }>()
 
-  const [loadState, setLoadState] = React.useState<number>(0)
+  const player = React.useRef<{ pointerLocked: boolean; body: THREE.Group }>({
+    pointerLocked: false,
+    body: new THREE.Group(),
+  })
+
+  const [loadState /*, setLoadState*/] = React.useState<number>(1)
 
   React.useEffect((): (() => void) | void => {
     if (!webGLSupported.current.value || !rendererContainer.current) return
@@ -104,9 +200,9 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
       renderer.current.shadowMap.type = THREE.PCFSoftShadowMap
 
       renderer.current.toneMapping = THREE.ACESFilmicToneMapping
-      renderer.current.toneMappingExposure = 0.2
+      renderer.current.toneMappingExposure = 1
 
-      renderer.current.setClearColor(855309)
+      renderer.current.setClearColor(0x000000)
 
       rendererContainer.current.appendChild(renderer.current.domElement)
     }
@@ -121,19 +217,29 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
         0.1,
         2000,
       )
-      camera.position.set(0, 4, 0)
-      camera.lookAt(0, 0, -300)
+      camera.position.set(0, 1, 0)
+      camera.lookAt(0, 1, -300)
+
+      player.current.body.add(camera)
+      player.current.body.rotateY(THREE.MathUtils.degToRad(180))
+
+      scene.add(player.current.body)
+
+      const CHUNK_SIZE: number = 250
 
       const chunkManager: ChunkManager = new ChunkManager({
         scene,
         camera,
         options: {
-          CHUNK_SIZE: 250,
+          CHUNK_SIZE,
         },
         generateChunkMethod,
+        getCameraPositionMethod: (): THREE.Vector3 => {
+          return player.current.body.position
+        },
       })
 
-      scene.fog = new THREE.Fog(0x0, 1, chunkManager.options.CHUNK_SIZE * 2)
+      scene.fog = new THREE.Fog(0x181d23, 1, chunkManager.options.CHUNK_SIZE)
 
       const axesLines: THREE.AxesHelper =
         objectUtils.axesLines.createAxesLines()
@@ -141,67 +247,27 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
       grid.material.blending = THREE.SubtractiveBlending
 
       const ambientLight: THREE.AmbientLight = new THREE.AmbientLight(
-        0xfdc371,
+        0xcbd4d9,
         1,
       )
+      scene.add(ambientLight)
 
-      const spotLight = new THREE.SpotLight(
-        0xfdc371,
-        100,
-        0,
-        undefined,
-        1,
-        0.05,
+      new RGBELoader().load(
+        resolveAsset(`hdr/kloppenheim_02_puresky_4k.hdr`),
+        (texture: THREE.DataTexture): void => {
+          texture.mapping = THREE.EquirectangularReflectionMapping
+
+          scene.background = texture
+          scene.backgroundIntensity = 0.1
+
+          scene.environment = texture
+          scene.environmentIntensity = 0.1
+        },
       )
-
-      const sunLight = spotLight
-
-      const sky: Sky = new Sky()
-      sky.scale.setScalar(Number.MAX_SAFE_INTEGER)
-
-      const sunPosition = new THREE.Vector3().setFromSphericalCoords(
-        1,
-        THREE.MathUtils.degToRad(180),
-        THREE.MathUtils.degToRad(180),
-      )
-      sky.material.uniforms.sunPosition.value = sunPosition
-
-      scene.add(sky)
-
-      const waterGeometry = new THREE.PlaneGeometry(10000, 10000)
-
-      const water = new Water(waterGeometry, {
-        textureWidth: 1024,
-        textureHeight: 1024,
-        waterNormals: new THREE.TextureLoader().load(
-          resolveAsset('textures/waternormals.jpg'),
-          function (texture) {
-            texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-
-            setLoadState((prevLoadState: number): number => prevLoadState + 1)
-          },
-        ),
-        sunDirection: new THREE.Vector3(0, 20, -200),
-        sunColor: 0x330000,
-        waterColor: 0xf01e0f,
-        distortionScale: 2,
-        fog: scene.fog !== undefined,
-      })
-
-      water.material.uniforms.size.value = 4
-
-      water.rotation.x = -Math.PI / 2
-      water.position.setY(0.6)
-
-      scene.add(water)
 
       rendererProperties.current = {
         scene,
         camera,
-        sky,
-        water,
-        ambientLight,
-        sunLight,
         objects: [],
         chunkManager,
         debugObjects: { grid, axesLines },
@@ -270,20 +336,47 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
       rendererContainer.current,
     )
 
+    const onPointerMove = (ev: PointerEvent): void => {
+      if (!player.current?.pointerLocked) return
+
+      if (ev.movementX !== 0) {
+        player.current.body.rotateY(
+          -0.002 * Math.max(Math.min(ev.movementX, 60), -60),
+        )
+      }
+
+      if (ev.movementY !== 0) {
+        rendererProperties.current?.camera.rotateX(
+          -0.001 * Math.max(Math.min(ev.movementY, 60), -60),
+        )
+      }
+    }
+    eventsManager.addContainerEvent('pointermove', onPointerMove)
+
+    const lockChangeAlert = (): void => {
+      if (document.pointerLockElement === renderer.current?.domElement) {
+        player.current!.pointerLocked = true
+      } else {
+        player.current!.pointerLocked = false
+      }
+    }
+    eventsManager.addDocumentEvent('pointerlockchange', lockChangeAlert)
+
     const heldKeys: Record<string, boolean> = {}
 
     const onKeyup: (ev: KeyboardEvent) => void = (ev: KeyboardEvent): void => {
-      heldKeys[ev.key] = false
-      heldKeys[ev.code] = false
+      heldKeys[ev.key.toLowerCase()] = false
+      heldKeys[ev.code.toLowerCase()] = false
     }
     eventsManager.addWindowEvent('keyup', onKeyup)
 
     const onKeydown: (ev: KeyboardEvent) => void = (
       ev: KeyboardEvent,
     ): void => {
-      if (heldKeys[ev.key] || heldKeys[ev.code]) return
+      if (heldKeys[ev.key.toLowerCase()] || heldKeys[ev.code.toLowerCase()])
+        return
 
-      switch (ev.key) {
+      switch (ev.key.toLowerCase()) {
         case 's':
           statsRef.current.next()
           break
@@ -299,45 +392,49 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
           break
       }
 
-      heldKeys[ev.key] = true
-      heldKeys[ev.code] = true
+      heldKeys[ev.key.toLowerCase()] = true
+      heldKeys[ev.code.toLowerCase()] = true
     }
     eventsManager.addWindowEvent('keydown', onKeydown)
 
     const onMouseDown = (): void => {
-      rendererContainer.current?.classList.add(styles.grabbing)
+      const pointerLockPromise: Promise<void> | undefined =
+        renderer.current?.domElement.requestPointerLock({
+          unadjustedMovement: true,
+        }) as Promise<void> | undefined
+
+      if (!pointerLockPromise) {
+        renderer.current?.domElement.requestPointerLock()
+      }
     }
     eventsManager.addContainerEvent('mousedown', onMouseDown)
 
-    const onMouseUp = (): void => {
-      rendererContainer.current?.classList.remove(styles.grabbing)
-    }
-    eventsManager.addContainerEvent('mouseup', onMouseUp)
-
     const animate: XRFrameRequestCallback = (): void => {
+      if (!renderer.current) return
+
       statsRef.current.stats.update()
 
-      rendererProperties.current!.water.material.uniforms['time'].value +=
-        1.0 / 60.0 / 2
+      const speed: number = heldKeys['shift'] ? 0.4 : 0.2
 
-      rendererProperties.current?.camera.translateZ(-0.2)
-      rendererProperties.current?.sunLight.translateZ(-0.2)
+      if (heldKeys['arrowup'] || heldKeys['w']) {
+        player.current.body.translateZ(-speed)
+      }
 
-      if (
-        Object.hasOwnProperty.call(
-          rendererProperties.current?.sunLight,
-          'target',
-        )
-      ) {
-        // eslint-disable-next-line no-extra-semi
-        ;(
-          rendererProperties.current?.sunLight as THREE.SpotLight
-        ).target.translateZ(-0.2)
+      if (heldKeys['arrowdown'] || heldKeys['s']) {
+        player.current.body.translateZ(speed)
+      }
+
+      if (heldKeys['arrowleft'] || heldKeys['a']) {
+        player.current.body.translateX(-speed)
+      }
+
+      if (heldKeys['arrowright'] || heldKeys['d']) {
+        player.current.body.translateX(speed)
       }
 
       rendererProperties.current?.chunkManager.poll()
 
-      renderer.current!.render(
+      renderer.current.render(
         rendererProperties.current!.scene,
         rendererProperties.current!.camera,
       )
@@ -346,22 +443,15 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
 
     const panel = new GUI({ autoPlace: true })
 
-    const waterUniforms = rendererProperties.current.water.material.uniforms
-
-    const folderWater = panel.addFolder('Water')
-    folderWater
-      .add(waterUniforms.distortionScale, 'value', 0, 8, 0.1)
-      .name('distortionScale')
-    folderWater.add(waterUniforms.size, 'value', 0.1, 10, 0.1).name('size')
-    folderWater.open()
-
     return (): void => {
       panel.destroy()
 
-      renderer.current!.setAnimationLoop(null)
-
       resizeObserver.disconnect()
       eventsManager.removeAllEvents()
+
+      renderer.current!.setAnimationLoop(null)
+
+      rendererProperties.current?.chunkManager.cacheManager.dispose()
     }
   }, [statsRef])
 
@@ -369,54 +459,7 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
     <div className={styles.app}>
       <div ref={rendererContainer} className={styles.container}></div>
 
-      <LoadingScreen loading={loadState < 1} />
-
-      <script
-        id="heightmapFragmentShader"
-        type="x-shader/x-fragment"
-        dangerouslySetInnerHTML={{
-          __html: `
-            #include <common>
-
-            uniform vec2 mousePos;
-            uniform float mouseSize;
-            uniform float viscosityConstant;
-            uniform float heightCompensation;
-
-            void main()	{
-
-              vec2 cellSize = 1.0 / resolution.xy;
-
-              vec2 uv = gl_FragCoord.xy * cellSize;
-
-              // heightmapValue.x == height from previous frame
-              // heightmapValue.y == height from penultimate frame
-              // heightmapValue.z, heightmapValue.w not used
-              vec4 heightmapValue = texture2D( heightmap, uv );
-
-              // Get neighbours
-              vec4 north = texture2D( heightmap, uv + vec2( 0.0, cellSize.y ) );
-              vec4 south = texture2D( heightmap, uv + vec2( 0.0, - cellSize.y ) );
-              vec4 east = texture2D( heightmap, uv + vec2( cellSize.x, 0.0 ) );
-              vec4 west = texture2D( heightmap, uv + vec2( - cellSize.x, 0.0 ) );
-
-              // https://web.archive.org/web/20080618181901/http://freespace.virgin.net/hugo.elias/graphics/x_water.htm
-
-              float newHeight = ( ( north.x + south.x + east.x + west.x ) * 0.5 - heightmapValue.y ) * viscosityConstant;
-
-              // Mouse influence
-              float mousePhase = clamp( length( ( uv - vec2( 0.5 ) ) * BOUNDS - vec2( mousePos.x, - mousePos.y ) ) * PI / mouseSize, 0.0, PI );
-              newHeight += ( cos( mousePhase ) + 1.0 ) * 0.28;
-
-              heightmapValue.y = heightmapValue.x;
-              heightmapValue.x = newHeight;
-
-              gl_FragColor = heightmapValue;
-
-            }
-          `,
-        }}
-      />
+      <LoadingScreen loading={loadState < 0} />
     </div>
   )
 }

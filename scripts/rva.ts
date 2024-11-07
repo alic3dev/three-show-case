@@ -1,5 +1,4 @@
 import type { PathsLookup } from '@/../scripts/rva.types'
-
 import type {
   Boundary,
   Contours,
@@ -23,6 +22,8 @@ import type {
 
 import fs from 'node:fs/promises'
 import path from 'node:path'
+
+import { processWithLog } from '@/utils/helpers/processWithLog'
 
 const rvaDirectory: string = path.join(__dirname, '../public/assets/RVA')
 const buildDirectory: string = path.join(rvaDirectory, 'build')
@@ -247,37 +248,18 @@ async function processSurfaces(): Promise<void> {
   })
 }
 
-async function process(
-  name: string,
-  icon: string,
-  processFunction: () => Promise<void>,
-): Promise<boolean> {
-  console.log(`Processing: ${icon} ${name}...`)
-
-  try {
-    await processFunction()
-  } catch {
-    console.log(`Failed    : ❌ ${name}\n`)
-    return false
-  }
-
-  console.log(`Processed : ✅ ${name}\n`)
-
-  return true
-}
-
 async function main(): Promise<void> {
   await fs.mkdir(paths.build.directory, { recursive: true })
 
-  await process('Contours', '⛰️ ', processContours)
-  await process('Roads', '🛣️ ', processRoads)
-  await process('Railroads', '🛤️ ', processRailroads)
-  await process('Structures', '🏘️ ', processStructures)
-  await process('Lakes', '💧', processLakes)
-  await process('Streams', '💦', processStreams)
-  await process('Boundary', '⭕️', processBoundary)
-  await process('Parks', '🏞️ ', processParks)
-  await process('Surfaces', '🚗', processSurfaces)
+  await processWithLog('Contours', '⛰️ ', processContours)
+  await processWithLog('Roads', '🛣️ ', processRoads)
+  await processWithLog('Railroads', '🛤️ ', processRailroads)
+  await processWithLog('Structures', '🏘️ ', processStructures)
+  await processWithLog('Lakes', '💧', processLakes)
+  await processWithLog('Streams', '💦', processStreams)
+  await processWithLog('Boundary', '⭕️', processBoundary)
+  await processWithLog('Parks', '🏞️ ', processParks)
+  await processWithLog('Surfaces', '🚗', processSurfaces)
 }
 
 main()

@@ -11,4 +11,16 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
   },
+
+  optimizeDeps: {
+    exclude: ['dist/assets/face_mesh'],
+  },
+
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler',
+      },
+    },
+  },
 })

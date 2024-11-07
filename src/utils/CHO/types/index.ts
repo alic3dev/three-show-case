@@ -1,0 +1,30 @@
+export type DataSetName =
+  | 'architectural_design_control_districts'
+  | 'bicycle_lane'
+  | 'bicycle_rack'
+  | 'contour_line_2006_2ft'
+  | 'elementary_school_zone_area'
+  | 'entrance_corridor_area'
+  | 'historic_conservation_district_area'
+  | 'municipal_boundary_area'
+  | 'parcel_area'
+  | 'parcel_point'
+  | 'park_area'
+  | 'parking_exempt_area'
+  | 'pedestrian_sidewalk_area'
+  | 'pedestrian_sidewalk_bridge_area'
+  | 'pedestrian_walkway_area'
+  | 'planning_area'
+  | 'railroad_centerline'
+  | 'structure_existing_area'
+  | 'surface_water_course_area'
+  | 'surface_water_course_line'
+  | 'trail_line'
+  | 'vehicle_alley_area'
+  | 'vehicle_driveway_area'
+  | 'vehicle_parking_area'
+  | 'wetland_area'
+
+export type DataSets<T = string> = {
+  [name in DataSetName]: T
+}

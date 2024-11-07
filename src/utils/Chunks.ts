@@ -2,6 +2,8 @@ import type { UUID } from 'crypto'
 
 import * as THREE from 'three'
 
+import { CacheManager } from '@/utils/CacheManager'
+
 interface ChunkManagerOptionsBase {
   CHUNK_SIZE: number
 
@@ -58,10 +60,17 @@ export class Chunk {
 
 type ChunkLookupTable = Record<number, Record<number, Record<number, Chunk>>>
 
-type GenerateChunkMethod = (
-  location: THREE.Vector3,
-  options: ChunkManagerOptions,
-) => Chunk
+export interface GenerateChunkMethodParams {
+  location: THREE.Vector3
+  options: ChunkManagerOptions
+  cacheManager: CacheManager
+}
+
+export type GenerateChunkMethod = ({
+  location,
+  options,
+  cacheManager,
+}: GenerateChunkMethodParams) => Chunk
 
 type GetCameraPositionMethod = () => THREE.Vector3
 
@@ -71,6 +80,8 @@ export class ChunkManager {
   private location: THREE.Vector3
   private lookupTable: ChunkLookupTable = {}
   private count: number = 0
+
+  readonly cacheManager: CacheManager = new CacheManager()
 
   private generateChunkMethod: GenerateChunkMethod
   private getCameraPositionMethod: GetCameraPositionMethod
@@ -126,13 +137,17 @@ export class ChunkManager {
   }
 
   generateChunk(location: THREE.Vector3): Chunk {
-    return this.generateChunkMethod(location, this.options)
+    return this.generateChunkMethod({
+      location,
+      options: this.options,
+      cacheManager: this.cacheManager,
+    })
   }
 
-  static generateChunk(
-    location: THREE.Vector3,
-    options: ChunkManagerOptions,
-  ): Chunk {
+  static generateChunk({
+    location,
+    options,
+  }: GenerateChunkMethodParams): Chunk {
     const positionOffset: THREE.Vector3 = new THREE.Vector3(
       location.x * options.CHUNK_SIZE,
       location.y * options.CHUNK_SIZE,
