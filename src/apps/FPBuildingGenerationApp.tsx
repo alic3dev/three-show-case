@@ -766,7 +766,6 @@ export const FPBuildingGenerationApp: AppComponent = (): React.ReactElement => {
 
         const onMouseDown = (): void => {
           const pointerLockPromise: Promise<void> | undefined =
-            // @ts-expect-error: This is valid, not sure why TS doesn't think so
             renderer.current?.domElement.requestPointerLock({
               unadjustedMovement: true,
             }) as Promise<void> | undefined

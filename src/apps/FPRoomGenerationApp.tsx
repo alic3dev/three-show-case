@@ -968,7 +968,6 @@ export const FPRoomGenerationApp: AppComponent = (): React.ReactElement => {
 
         const onMouseDown = (): void => {
           const pointerLockPromise =
-            // @ts-expect-error: This is valid, not sure why TS doesn't think so
             renderer.current?.domElement.requestPointerLock({
               unadjustedMovement: true,
             })
