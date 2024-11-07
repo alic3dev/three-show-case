@@ -52,6 +52,7 @@ import {
 } from '@/apps/HallsApp'
 import { RVAApp, displayName as eighteenthDisplayName } from '@/apps/RVAApp'
 import { GustsApp, displayName as nineteenthDisplayName } from '@/apps/GustsApp'
+import { CHOApp, displayName as twentiethDisplayName } from '@/apps/CHOApp'
 
 export const apps: App[] = [
   { Component: BasicCube, displayName: firstDisplayName },
@@ -73,6 +74,7 @@ export const apps: App[] = [
   { Component: HallsApp, displayName: seventeenthDisplayName },
   { Component: RVAApp, displayName: eighteenthDisplayName },
   { Component: GustsApp, displayName: nineteenthDisplayName },
+  { Component: CHOApp, displayName: twentiethDisplayName },
 ]
 
 export { NavigationApp } from '@/apps/NavigationApp'
