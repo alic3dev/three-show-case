@@ -69,6 +69,9 @@ const paths: PathsLookup = {
     ),
     planning_area: path.join(buildDirectory, 'planning_area.json'),
     railroad_centerline: path.join(buildDirectory, 'railroad_centerline.json'),
+    road_area: path.join(buildDirectory, 'road_area.json'),
+    road_bridge_area: path.join(buildDirectory, 'road_bridge_area.json'),
+    road_centerline: path.join(buildDirectory, 'road_centerline.json'),
     structure_existing_area: path.join(
       buildDirectory,
       'structure_existing_area.json',
@@ -178,6 +181,17 @@ const paths: PathsLookup = {
       'railroad_centerline',
       'railroad_centerline_11_02_2023.shp',
     ),
+    road_area: path.join(choDirectory, 'road_area', 'road_area_11_02_2023.shp'),
+    road_bridge_area: path.join(
+      choDirectory,
+      'road_bridge_area',
+      'road_bridge_area_11_02_2023.shp',
+    ),
+    road_centerline: path.join(
+      choDirectory,
+      'road_centerline',
+      'road_centerline_11_02_2023.shp',
+    ),
     structure_existing_area: path.join(
       choDirectory,
       'structure_existing_area',
@@ -219,6 +233,47 @@ const paths: PathsLookup = {
       'wetland_area_11_02_2023.shp',
     ),
   },
+}
+
+async function processBasic(
+  inputPath: string,
+  outputPath: string,
+): Promise<void> {
+  const source = await shapefile.open(inputPath)
+  let result = await source.read()
+
+  const geometries = []
+
+  while (!result.done) {
+    geometries.push(result.value.geometry)
+
+    result = await source.read()
+  }
+
+  await fs.writeFile(outputPath, JSON.stringify(geometries), {
+    encoding: 'utf8',
+  })
+}
+
+async function processRoads(): Promise<void> {
+  processBasic(paths.files.road_area, paths.build.road_area)
+  processBasic(paths.files.road_bridge_area, paths.build.road_bridge_area)
+  processBasic(paths.files.road_centerline, paths.build.road_centerline)
+}
+
+async function processSidewalks(): Promise<void> {
+  processBasic(
+    paths.files.pedestrian_sidewalk_area,
+    paths.build.pedestrian_sidewalk_area,
+  )
+  processBasic(
+    paths.files.pedestrian_sidewalk_bridge_area,
+    paths.build.pedestrian_sidewalk_bridge_area,
+  )
+  processBasic(
+    paths.files.pedestrian_walkway_area,
+    paths.build.pedestrian_walkway_area,
+  )
 }
 
 async function processMunicipalBoundaryArea(): Promise<void> {
@@ -270,10 +325,8 @@ async function main(): Promise<void> {
     }
   }
 
-  return
-
   // await processWithLog('Contours', '⛰️ ', processContours)
-  // await processWithLog('Roads', '🛣️ ', processRoads)
+  await processWithLog('Roads', '🛣️ ', processRoads)
   // await processWithLog('Railroads', '🛤️ ', processRailroads)
   // await processWithLog('Structures', '🏘️ ', processStructures)
   // await processWithLog('Lakes', '💧', processLakes)
@@ -281,6 +334,7 @@ async function main(): Promise<void> {
   await processWithLog('Boundary', '⭕️', processMunicipalBoundaryArea)
   // await processWithLog('Parks', '🏞️ ', processParks)
   // await processWithLog('Surfaces', '🚗', processSurfaces)
+  await processWithLog('Sidewalks', '🚷', processSidewalks)
 }
 
 main()

@@ -25,10 +25,10 @@ import styles from '@/apps/StandardApp.module.scss'
 
 interface CHOObjects<T = THREE.Object3D[]> extends DataSets<T> {
   filteredType: {
-    // roads: {
-    //   paved: T
-    //   unpaved: T
-    // }
+    roads: {
+      area: T
+      bridge: T
+    }
     // surfaces: Record<keyof typeof SurfacesFeaturePropertiesSubType, T>
   }
   // railroads: string,
@@ -59,61 +59,64 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
     debugObjects: Record<string, THREE.Object3D>
   }>()
 
-  // const settings = React.useRef<{ visible: CHOObjects<boolean> }>({
-  //   visible: {
-  //     architectural_design_control_districts: true,
-  //     bicycle_lane: true,
-  //     bicycle_rack: true,
-  //     contour_line_2006_2ft: true,
-  //     elementary_school_zone_area: true,
-  //     entrance_corridor_area: true,
-  //     historic_conservation_district_area: true,
-  //     municipal_boundary_area: true,
-  //     parcel_area: true,
-  //     parcel_point: true,
-  //     park_area: true,
-  //     parking_exempt_area: true,
-  //     pedestrian_sidewalk_area: true,
-  //     pedestrian_sidewalk_bridge_area: true,
-  //     pedestrian_walkway_area: true,
-  //     planning_area: true,
-  //     railroad_centerline: true,
-  //     structure_existing_area: true,
-  //     surface_water_course_area: true,
-  //     surface_water_course_line: true,
-  //     trail_line: true,
-  //     vehicle_alley_area: true,
-  //     vehicle_driveway_area: true,
-  //     vehicle_parking_area: true,
-  //     wetland_area: true,
+  const settings = React.useRef<{ visible: CHOObjects<boolean> }>({
+    visible: {
+      architectural_design_control_districts: true,
+      bicycle_lane: true,
+      bicycle_rack: true,
+      contour_line_2006_2ft: true,
+      elementary_school_zone_area: true,
+      entrance_corridor_area: true,
+      historic_conservation_district_area: true,
+      municipal_boundary_area: true,
+      parcel_area: true,
+      parcel_point: true,
+      park_area: true,
+      parking_exempt_area: true,
+      pedestrian_sidewalk_area: true,
+      pedestrian_sidewalk_bridge_area: true,
+      pedestrian_walkway_area: true,
+      planning_area: true,
+      railroad_centerline: true,
+      road_area: true,
+      road_bridge_area: true,
+      road_centerline: true,
+      structure_existing_area: true,
+      surface_water_course_area: true,
+      surface_water_course_line: true,
+      trail_line: true,
+      vehicle_alley_area: true,
+      vehicle_driveway_area: true,
+      vehicle_parking_area: true,
+      wetland_area: true,
 
-  //     // contours: true,
-  //     // lakes: true,
-  //     // parks: true,
-  //     // railroads: true,
-  //     // roads: true,
-  //     // streams: true,
-  //     // structures: true,
-  //     // surfaces: true,
+      // contours: true,
+      // lakes: true,
+      // parks: true,
+      // railroads: true,
+      // roads: true,
+      // streams: true,
+      // structures: true,
+      // surfaces: true,
 
-  //     filteredType: {
-  //       // roads: {
-  //       //   paved: true,
-  //       //   unpaved: true,
-  //       // },
-  //       // surfaces: {
-  //       //   Alley: true,
-  //       //   Ballast: true,
-  //       //   Bridge: true,
-  //       //   Driveway: true,
-  //       //   Median: true,
-  //       //   Overpass: true,
-  //       //   Parking: true,
-  //       //   Sidewalk: true,
-  //       // },
-  //     },
-  //   },
-  // })
+      filteredType: {
+        roads: {
+          area: true,
+          bridge: true,
+        },
+        // surfaces: {
+        //   Alley: true,
+        //   Ballast: true,
+        //   Bridge: true,
+        //   Driveway: true,
+        //   Median: true,
+        //   Overpass: true,
+        //   Parking: true,
+        //   Sidewalk: true,
+        // },
+      },
+    },
+  })
 
   const player = React.useRef<{ pointerLocked: boolean; body: THREE.Group }>({
     pointerLocked: false,
@@ -157,8 +160,8 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
         90,
         rendererContainer.current.clientWidth /
           rendererContainer.current.clientHeight,
-        0.0001,
-        1,
+        0.1,
+        2000000,
       )
       camera.position.set(0, 0.1, 0)
       camera.lookAt(0, 0, 0)
@@ -166,11 +169,7 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
       player.current.body.add(camera)
       scene.add(player.current.body)
 
-      player.current.body.position.set(
-        77.512932155879895,
-        0,
-        37.525919678111798,
-      )
+      player.current.body.position.set(11487216.125, 10000, 3902278.0249999985)
 
       player.current.body.rotateY(THREE.MathUtils.degToRad(180))
 
@@ -219,6 +218,9 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
         pedestrian_walkway_area: [],
         planning_area: [],
         railroad_centerline: [],
+        road_area: [],
+        road_bridge_area: [],
+        road_centerline: [],
         structure_existing_area: [],
         surface_water_course_area: [],
         surface_water_course_line: [],
@@ -229,10 +231,10 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
         wetland_area: [],
 
         filteredType: {
-          // roads: {
-          //   paved: [],
-          //   unpaved: [],
-          // },
+          roads: {
+            area: [],
+            bridge: [],
+          },
           // surfaces: {
           //   Alley: [],
           //   Ballast: [],
@@ -286,9 +288,9 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
       //     }
       //   })
 
-      const assetsCHOLoadableResolve: LoadableResolver = addBatchedLoadable(1)
+      const assetsCHOLoadableResolve: LoadableResolver = addBatchedLoadable(4)
 
-      fetch(resolveAsset('CHO/build/boundary.json'))
+      fetch(resolveAsset('CHO/build/municipal_boundary_area.json'))
         .then((res: Response): Promise<string> => res.text())
         .then((text: string): void => {
           const boundary: [number, number][] = JSON.parse(text)
@@ -305,9 +307,13 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
           let minPoint: THREE.Vector2 | undefined = undefined
           let maxPoint: THREE.Vector2 | undefined = undefined
 
-          for (const boundarySet of boundary) {
+          for (let i: number = 0; i < boundary.length - 1; i++) {
+            const boundarySet: [number, number] = boundary[i]
+            const boundarySetNext: [number, number] = boundary[i + 1]
+
             boundaryPoints.push(
               new THREE.Vector3(boundarySet[0], 0, boundarySet[1]),
+              new THREE.Vector3(boundarySetNext[0], 0, boundarySetNext[1]),
             )
 
             if (!minPoint || !maxPoint) {
@@ -323,11 +329,11 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
               }
 
               if (boundarySet[1] < minPoint.y) {
-                minPoint.setX(boundarySet[1])
+                minPoint.setY(boundarySet[1])
               }
 
               if (boundarySet[1] > maxPoint.y) {
-                maxPoint.setX(boundarySet[1])
+                maxPoint.setY(boundarySet[1])
               }
             }
           }
@@ -355,137 +361,126 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
               (_minPoint.y + _maxPoint.y) / 2,
             )
 
-            player.current.body.position.set(midPoint.x, -0.01, midPoint.y)
-
-            console.log(boundaryLine.position)
-            console.log(player.current.body.position)
+            player.current.body.position.set(midPoint.x, 12500, midPoint.y)
           }
 
           assetsCHOLoadableResolve()
         })
 
-      // fetch(resolveAsset('RVA/build/roads.json'))
-      //   .then((res: Response): Promise<string> => res.text())
-      //   .then((text: string): void => {
-      //     const roads: MinifiedRoad[] = JSON.parse(text)
+      fetch(resolveAsset('CHO/build/road_area.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const roadAreas = JSON.parse(text)
+          const roadAreasMaterial: THREE.LineBasicMaterial =
+            new THREE.LineBasicMaterial({
+              color: 0x0000ff,
+            })
 
-      //     const material = new THREE.LineBasicMaterial({ color: 0x0000ff })
+          const roadAreasPoints: THREE.Vector3[] = []
 
-      //     const pavedPoints: THREE.Vector3[] = []
-      //     const unpavedPoints: THREE.Vector3[] = []
+          for (const roadArea of roadAreas) {
+            if (roadArea.type === 'Polygon') {
+              for (const polygon of roadArea.coordinates) {
+                for (let i: number = 0; i < polygon.length - 1; i++) {
+                  roadAreasPoints.push(
+                    new THREE.Vector3(polygon[i][0], 0, polygon[i][1]),
+                    new THREE.Vector3(polygon[i + 1][0], 0, polygon[i + 1][1]),
+                  )
+                }
+              }
+            } else {
+              for (const polygon of roadArea.coordinates) {
+                for (const subPolygon of polygon) {
+                  for (let i: number = 0; i < subPolygon.length - 1; i++) {
+                    roadAreasPoints.push(
+                      new THREE.Vector3(subPolygon[i][0], 0, subPolygon[i][1]),
+                      new THREE.Vector3(
+                        subPolygon[i + 1][0],
+                        0,
+                        subPolygon[i + 1][1],
+                      ),
+                    )
+                  }
+                }
+              }
+            }
+          }
 
-      //     let minPoint: THREE.Vector2 | undefined = undefined
-      //     let maxPoint: THREE.Vector2 | undefined = undefined
+          const roadAreasGeometry = new THREE.BufferGeometry().setFromPoints(
+            roadAreasPoints,
+          )
 
-      //     const checkPoint = (point: [number, number]) => {
-      //       if (typeof minPoint === 'undefined') {
-      //         minPoint = new THREE.Vector2(point[0], point[1])
-      //       }
+          const roadAreasMesh = new THREE.LineSegments(
+            roadAreasGeometry,
+            roadAreasMaterial,
+          )
 
-      //       if (point[0] < minPoint.x) {
-      //         minPoint.x = point[0]
-      //       }
+          // roadAreasMesh.visible =
+          //   settings.current.visible.roads &&
+          //   settings.current.visible.filteredType.roads.unpaved
 
-      //       if (point[1] < minPoint.y) {
-      //         minPoint.y = point[1]
-      //       }
+          CHO.road_area.push(roadAreasMesh)
+          scene.add(roadAreasMesh)
 
-      //       if (typeof maxPoint === 'undefined') {
-      //         maxPoint = new THREE.Vector2(point[0], point[1])
-      //       }
+          assetsCHOLoadableResolve()
+        })
 
-      //       if (point[0] > maxPoint.x) {
-      //         maxPoint.x = point[0]
-      //       }
+      fetch(resolveAsset('CHO/build/road_bridge_area.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const roadBridgeAreas = JSON.parse(text)
+          const roadBridgeAreasMaterial: THREE.LineBasicMaterial =
+            new THREE.LineBasicMaterial({
+              color: 0x0000ff,
+            })
 
-      //       if (point[1] > maxPoint.y) {
-      //         maxPoint.y = point[1]
-      //       }
-      //     }
+          const roadAreasPoints: THREE.Vector3[] = []
 
-      //     for (const road of roads) {
-      //       // road.paved
+          for (const roadArea of roadBridgeAreas) {
+            if (roadArea.type === 'Polygon') {
+              for (const polygon of roadArea.coordinates) {
+                for (let i: number = 0; i < polygon.length - 1; i++) {
+                  roadAreasPoints.push(
+                    new THREE.Vector3(polygon[i][0], 0, polygon[i][1]),
+                    new THREE.Vector3(polygon[i + 1][0], 0, polygon[i + 1][1]),
+                  )
+                }
+              }
+            } else {
+              for (const polygon of roadArea.coordinates) {
+                for (const subPolygon of polygon) {
+                  for (let i: number = 0; i < subPolygon.length - 1; i++) {
+                    roadAreasPoints.push(
+                      new THREE.Vector3(subPolygon[i][0], 0, subPolygon[i][1]),
+                      new THREE.Vector3(
+                        subPolygon[i + 1][0],
+                        0,
+                        subPolygon[i + 1][1],
+                      ),
+                    )
+                  }
+                }
+              }
+            }
+          }
 
-      //       if (road.geometry.type === 'Polygon') {
-      //         for (const polygon of road.geometry.coordinates) {
-      //           for (let i: number = 0; i < polygon.length - 1; i++) {
-      //             checkPoint([-polygon[i][0], polygon[i][1]])
+          const roadBridgeAreasGeometry =
+            new THREE.BufferGeometry().setFromPoints(roadAreasPoints)
 
-      //             const pointsToAdd = [
-      //               new THREE.Vector3(-polygon[i][0], 0, polygon[i][1]),
-      //               new THREE.Vector3(-polygon[i + 1][0], 0, polygon[i + 1][1]),
-      //             ]
+          const roadBridgeAreasMesh = new THREE.LineSegments(
+            roadBridgeAreasGeometry,
+            roadBridgeAreasMaterial,
+          )
 
-      //             if (road.paved) {
-      //               pavedPoints.push(...pointsToAdd)
-      //             } else {
-      //               unpavedPoints.push(...pointsToAdd)
-      //             }
-      //           }
-      //         }
-      //       } else {
-      //         for (const polygon of road.geometry.coordinates) {
-      //           for (const subPolygon of polygon) {
-      //             for (let i: number = 0; i < subPolygon.length - 1; i++) {
-      //               checkPoint([-subPolygon[i][0], subPolygon[i][1]])
+          // roadAreasMesh.visible =
+          //   settings.current.visible.roads &&
+          //   settings.current.visible.filteredType.roads.unpaved
 
-      //               const pointsToAdd = [
-      //                 new THREE.Vector3(-subPolygon[i][0], 0, subPolygon[i][1]),
-      //                 new THREE.Vector3(
-      //                   -subPolygon[i + 1][0],
-      //                   0,
-      //                   subPolygon[i + 1][1],
-      //                 ),
-      //               ]
+          CHO.road_area.push(roadBridgeAreasMesh)
+          scene.add(roadBridgeAreasMesh)
 
-      //               if (road.paved) {
-      //                 pavedPoints.push(...pointsToAdd)
-      //               } else {
-      //                 unpavedPoints.push(...pointsToAdd)
-      //               }
-      //             }
-      //           }
-      //         }
-      //       }
-      //     }
-
-      //     const geometryPaved = new THREE.BufferGeometry().setFromPoints(
-      //       pavedPoints,
-      //     )
-      //     const geometryUnpaved = new THREE.BufferGeometry().setFromPoints(
-      //       unpavedPoints,
-      //     )
-
-      //     const linePaved = new THREE.LineSegments(geometryPaved, material)
-      //     linePaved.visible =
-      //       settings.current.visible.roads &&
-      //       settings.current.visible.filteredType.roads.paved
-
-      //     const lineUnpaved = new THREE.LineSegments(geometryUnpaved, material)
-      //     lineUnpaved.visible =
-      //       settings.current.visible.roads &&
-      //       settings.current.visible.filteredType.roads.unpaved
-
-      //     RVA.roads.push(linePaved, lineUnpaved)
-      //     RVA.filteredType.roads.paved.push(linePaved)
-      //     RVA.filteredType.roads.unpaved.push(lineUnpaved)
-
-      //     scene.add(linePaved, lineUnpaved)
-
-      //     if (minPoint && maxPoint) {
-      //       const _minPoint = minPoint as THREE.Vector2
-      //       const _maxPoint = maxPoint as THREE.Vector2
-
-      //       const midPoint: THREE.Vector2 = new THREE.Vector2(
-      //         (_minPoint.x + _maxPoint.x) / 2,
-      //         (_minPoint.y + _maxPoint.y) / 2,
-      //       )
-
-      //       player.current.body.position.set(midPoint.x, -0.01, midPoint.y)
-      //     }
-
-      //     assetsRVALoadableResolve()
-      //   })
+          assetsCHOLoadableResolve()
+        })
 
       // fetch(resolveAsset('RVA/build/structures.json'))
       //   .then((res: Response): Promise<string> => res.text())
@@ -666,102 +661,132 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
       //     assetsRVALoadableResolve()
       //   })
 
-      // fetch(resolveAsset('RVA/build/surfaces.json'))
-      //   .then((res: Response): Promise<string> => res.text())
-      //   .then((text: string): void => {
-      //     const surfaces: MinifiedSurface[] = JSON.parse(text)
+      fetch(resolveAsset('CHO/build/pedestrian_sidewalk_area.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const pedestrianSidewalkArea = JSON.parse(text)
 
-      //     const material = new THREE.LineBasicMaterial({
-      //       color: 0x999999,
-      //       transparent: true,
-      //       opacity: 0.5,
-      //     })
+          const material = new THREE.LineBasicMaterial({
+            color: 0x999999,
+            transparent: true,
+            opacity: 0.5,
+          })
 
-      //     const points: Record<
-      //       keyof typeof SurfacesFeaturePropertiesSubType,
-      //       THREE.Vector3[]
-      //     > = {
-      //       Alley: [],
-      //       Ballast: [],
-      //       Bridge: [],
-      //       Driveway: [],
-      //       Median: [],
-      //       Overpass: [],
-      //       Parking: [],
-      //       Sidewalk: [],
-      //     }
+          const points: { [key: string]: THREE.Vector3[] } = {
+            Alley: [],
+            Ballast: [],
+            Bridge: [],
+            Driveway: [],
+            Median: [],
+            Overpass: [],
+            Parking: [],
+            pedestrianSidewalkArea: [],
+          }
 
-      //     function addPoints(
-      //       type: SurfacesFeaturePropertiesSubType,
-      //       ...newPoints: THREE.Vector3[]
-      //     ): void {
-      //       for (const prop in RVAUtils.lookups
-      //         .surfaceFeaturePropertiesSubType) {
-      //         if (
-      //           RVAUtils.lookups.surfaceFeaturePropertiesSubType[
-      //             prop as keyof typeof SurfacesFeaturePropertiesSubType
-      //           ] === type
-      //         ) {
-      //           points[
-      //             prop as keyof typeof SurfacesFeaturePropertiesSubType
-      //           ].push(...newPoints)
-      //         }
-      //       }
-      //     }
+          for (const sidewalkArea of pedestrianSidewalkArea) {
+            if (sidewalkArea.type === 'Polygon') {
+              for (const polygon of sidewalkArea.coordinates) {
+                for (let i: number = 0; i < polygon.length - 1; i++) {
+                  points.pedestrianSidewalkArea.push(
+                    new THREE.Vector3(polygon[i][0], 0, polygon[i][1]),
+                    new THREE.Vector3(polygon[i + 1][0], 0, polygon[i + 1][1]),
+                  )
+                }
+              }
+            } else {
+              for (const polygon of sidewalkArea.coordinates) {
+                for (const subPolygon of polygon) {
+                  for (let i: number = 0; i < subPolygon.length - 1; i++) {
+                    points.pedestrianSidewalkArea.push(
+                      new THREE.Vector3(subPolygon[i][0], 0, subPolygon[i][1]),
+                      new THREE.Vector3(
+                        subPolygon[i + 1][0],
+                        0,
+                        subPolygon[i + 1][1],
+                      ),
+                    )
+                  }
+                }
+              }
+            }
+          }
 
-      //     for (const surface of surfaces) {
-      //       if (surface.geometry.type === 'Polygon') {
-      //         for (const polygon of surface.geometry.coordinates) {
-      //           for (let i: number = 0; i < polygon.length - 1; i++) {
-      //             addPoints(
-      //               surface.subType,
-      //               new THREE.Vector3(-polygon[i][0], 0, polygon[i][1]),
-      //               new THREE.Vector3(-polygon[i + 1][0], 0, polygon[i + 1][1]),
-      //             )
-      //           }
-      //         }
-      //       } else {
-      //         for (const polygon of surface.geometry.coordinates) {
-      //           for (const subPolygon of polygon) {
-      //             for (let i: number = 0; i < subPolygon.length - 1; i++) {
-      //               addPoints(
-      //                 surface.subType,
-      //                 new THREE.Vector3(-subPolygon[i][0], 0, subPolygon[i][1]),
-      //                 new THREE.Vector3(
-      //                   -subPolygon[i + 1][0],
-      //                   0,
-      //                   subPolygon[i + 1][1],
-      //                 ),
-      //               )
-      //             }
-      //           }
-      //         }
-      //       }
-      //     }
+          for (const prop in points) {
+            const geometry = new THREE.BufferGeometry().setFromPoints(
+              points[prop],
+            )
 
-      //     for (const prop in points) {
-      //       const geometry = new THREE.BufferGeometry().setFromPoints(
-      //         points[prop as keyof typeof SurfacesFeaturePropertiesSubType],
-      //       )
+            const line = new THREE.LineSegments(geometry, material)
+            // line.visible =
+            //   settings.current.visible.surfaces &&
+            //   settings.current.visible.filteredType.surfaces[
+            //     prop as keyof typeof SurfacesFeaturePropertiesSubType
+            //   ]
 
-      //       const line = new THREE.LineSegments(geometry, material)
+            CHO.pedestrian_sidewalk_area.push(line)
 
-      //       line.visible =
-      //         settings.current.visible.surfaces &&
-      //         settings.current.visible.filteredType.surfaces[
-      //           prop as keyof typeof SurfacesFeaturePropertiesSubType
-      //         ]
+            scene.add(line)
+          }
 
-      //       RVA.surfaces.push(line)
-      //       RVA.filteredType.surfaces[
-      //         prop as keyof typeof SurfacesFeaturePropertiesSubType
-      //       ].push(line)
+          assetsCHOLoadableResolve()
+        })
 
-      //       scene.add(line)
-      //     }
+      fetch(resolveAsset('CHO/build/pedestrian_sidewalk_bridge_area.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const pedestrianSidewalkBridgeArea = JSON.parse(text)
 
-      //     assetsRVALoadableResolve()
-      //   })
+          const material = new THREE.LineBasicMaterial({
+            color: 0x999999,
+            transparent: true,
+            opacity: 0.5,
+          })
+
+          const points: THREE.Vector3[] = []
+
+          for (const sidewalkBridgeArea of pedestrianSidewalkBridgeArea) {
+            if (sidewalkBridgeArea.type === 'Polygon') {
+              for (const polygon of sidewalkBridgeArea.coordinates) {
+                for (let i: number = 0; i < polygon.length - 1; i++) {
+                  points.push(
+                    new THREE.Vector3(polygon[i][0], 0, polygon[i][1]),
+                    new THREE.Vector3(polygon[i + 1][0], 0, polygon[i + 1][1]),
+                  )
+                }
+              }
+            } else {
+              for (const polygon of sidewalkBridgeArea.coordinates) {
+                for (const subPolygon of polygon) {
+                  for (let i: number = 0; i < subPolygon.length - 1; i++) {
+                    points.push(
+                      new THREE.Vector3(subPolygon[i][0], 0, subPolygon[i][1]),
+                      new THREE.Vector3(
+                        subPolygon[i + 1][0],
+                        0,
+                        subPolygon[i + 1][1],
+                      ),
+                    )
+                  }
+                }
+              }
+            }
+          }
+
+          const geometry = new THREE.BufferGeometry().setFromPoints(points)
+
+          const line = new THREE.LineSegments(geometry, material)
+          // line.visible =
+          //   settings.current.visible.surfaces &&
+          //   settings.current.visible.filteredType.surfaces[
+          //     prop as keyof typeof SurfacesFeaturePropertiesSubType
+          //   ]
+
+          CHO.pedestrian_sidewalk_bridge_area.push(line)
+
+          scene.add(line)
+
+          assetsCHOLoadableResolve()
+        })
 
       rendererProperties.current = {
         scene,
@@ -891,6 +916,14 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
           //   road.visible = !road.visible
           // }
 
+          // for (const obj of rendererProperties.current?.scene.children) {
+          //   obj.visible = false
+          // }
+
+          // rendererProperties.current!.CHO.pedestrian_sidewalk_bridge_area.forEach(
+          //   (a) => (a.visible = true),
+          // )
+
           break
         default:
           break
@@ -918,7 +951,7 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
 
       statsRef.current.stats.update()
 
-      const speed: number = heldKeys['shift'] ? 0.0001 : 0.001
+      const speed: number = heldKeys['shift'] ? 1000 : 100
 
       if (heldKeys['arrowup'] || heldKeys['w']) {
         player.current.body.translateZ(-speed)
@@ -959,7 +992,7 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
     // const visibilityPanel: GUI = panel.addFolder('Visibility')
 
     // function addVisibilityPanel(
-    //   name: keyof DataSets,
+    //   name: string, //: keyof DataSets,
     //   to: GUI = visibilityPanel,
     //   onChange?: (v: boolean) => void,
     // ) {
