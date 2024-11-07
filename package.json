@@ -1,7 +1,18 @@
 {
   "name": "three-show-case",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "author": {
+    "name": "alic3dev",
+    "email": "alice@alic3.dev",
+    "url": "https://alic3.dev"
+  },
+  "repository": "github:alic3dev/three-show-case",
+  "bugs": {
+    "url": "https://github.com/alic3dev/three-show-case/issues",
+    "email": "bug@alic3.dev"
+  },
+  "homepage": "https://three-show-case.alic3.dev",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && sed -i -e \"s/\\,this.Ammo=y//g\" dist/assets/ammo-*.js",
