@@ -2,7 +2,10 @@ import type { AppComponent } from '@/apps/types'
 
 import type { StatsRefObject } from '@/hooks/useStats'
 
-import type { ChunkManagerOptions } from '@/utils/Chunks'
+import type {
+  GenerateChunkMethod,
+  GenerateChunkMethodParams,
+} from '@/utils/Chunks'
 
 import React from 'react'
 
@@ -32,10 +35,10 @@ interface AnimatedIntensity {
   fromTime: DOMHighResTimeStamp
 }
 
-function generateChunkMethod(
-  location: THREE.Vector3,
-  options: ChunkManagerOptions,
-): Chunk {
+const generateChunkMethod: GenerateChunkMethod = function generateChunkMethod({
+  location,
+  options,
+}: GenerateChunkMethodParams): Chunk {
   const positionOffset: THREE.Vector3 = new THREE.Vector3(
     location.x * options.CHUNK_SIZE,
     location.y * options.CHUNK_SIZE,
