@@ -130,10 +130,10 @@ export const HouseApp: AppComponent = (): React.ReactElement => {
 
       const floorGeometry = new THREE.BoxGeometry(100, 1, 100)
       const floorMaterial = new THREE.MeshPhongMaterial({
-        // color: 0xffffff,
         ...loadPolyHavenTexture({
           name: 'dark_wooden_planks',
-          repeats: new THREE.Vector2(10, 10),
+          ambient: 'arm',
+          repeats: 10,
           incrementLoadState,
         }),
       })
