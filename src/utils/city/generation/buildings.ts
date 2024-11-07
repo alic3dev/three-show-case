@@ -11,6 +11,7 @@ import * as THREE from 'three'
 
 import {
   buildingTextures,
+  buildingTextureAmbientLookup,
   geometryCache,
   materialCache,
 } from '@/utils/CacheManager'
@@ -163,6 +164,7 @@ export async function generateBuildings({
       const wallTextures: PolyHavenTextureResult = loadPolyHavenTexture({
         name: randomWallTextureName,
         res: resolutions.TEXTURE,
+        ambient: buildingTextureAmbientLookup(randomWallTextureName),
         repeats,
         incrementLoadState,
       })
@@ -248,6 +250,7 @@ export async function generateBuildings({
         const pathTextures: PolyHavenTextureResult = loadPolyHavenTexture({
           name: randomPathTextureName,
           res: resolutions.TEXTURE,
+          ambient: buildingTextureAmbientLookup(randomPathTextureName),
           repeats,
           incrementLoadState,
         })

@@ -23,6 +23,19 @@ export const buildingTextures: Record<BuildingTextureTypes, string[]> = {
   misc: [],
 }
 
+export function buildingTextureAmbientLookup(
+  textureName: string,
+): 'arm' | 'rough' {
+  switch (textureName) {
+    case 'large_sandstone_blocks':
+    case 'rough_concrete':
+    case 'concrete_panels':
+      return 'arm'
+    default:
+      return 'rough'
+  }
+}
+
 export const materialCache: Record<
   BuildingTextureTypes,
   Record<string, THREE.MeshPhongMaterial>
