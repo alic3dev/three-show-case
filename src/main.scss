@@ -1,4 +1,4 @@
-@import '@catppuccin/palette/style';
+@use '@catppuccin/palette/style';
 
 @mixin set-color($flavor, $color) {
   --color-#{$color}: var(--ctp-#{$flavor}-#{$color});
