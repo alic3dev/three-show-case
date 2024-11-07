@@ -15,7 +15,39 @@ const pathCloudFrontClientJSON: string = path.join(
   '../src/data/cf-client.json',
 )
 
+const parentDirectory = path.join(__dirname, '../')
+
 const ignoredFiles: string[] = ['.DS_Store']
+const ignoredDirectories: string[] = [
+  'public/assets/CHO/ADC_district_area',
+  'public/assets/CHO/pedestrian_walkway_area',
+  'public/assets/CHO/bicycle_lane_line',
+  'public/assets/CHO/planning_area',
+  'public/assets/CHO/bicycle_rack_point',
+  'public/assets/CHO/railroad_centerline',
+  'public/assets/CHO/road_area',
+  'public/assets/CHO/contour_line_2006_2ft',
+  'public/assets/CHO/road_bridge_area',
+  'public/assets/CHO/elementary_school_zone_area',
+  'public/assets/CHO/road_centerline',
+  'public/assets/CHO/entrance_corridor_area',
+  'public/assets/CHO/structure_existing_area',
+  'public/assets/CHO/historic_conservation_district_area',
+  'public/assets/CHO/surface_water_course_area',
+  'public/assets/CHO/municipal_boundary_area',
+  'public/assets/CHO/surface_water_course_line',
+  'public/assets/CHO/parcel_area',
+  'public/assets/CHO/trail_line',
+  'public/assets/CHO/parcel_point',
+  'public/assets/CHO/vehicle_alley_area',
+  'public/assets/CHO/park_area',
+  'public/assets/CHO/vehicle_driveway_area',
+  'public/assets/CHO/parking_exempt_area',
+  'public/assets/CHO/vehicle_parking_area',
+  'public/assets/CHO/pedestrian_sidewalk_area',
+  'public/assets/CHO/wetland_area',
+  'public/assets/CHO/pedestrian_sidewalk_bridge_area',
+]
 
 interface CloudFrontFileData {
   name: string
@@ -38,7 +70,11 @@ async function main(): Promise<void> {
   const relativeFilePaths: string[] = dir
     .filter(
       (file: Dirent): boolean =>
-        file.isFile() && !ignoredFiles.includes(file.name),
+        file.isFile() &&
+        !ignoredFiles.includes(file.name) &&
+        !ignoredDirectories.includes(
+          file.parentPath.replace(parentDirectory, ''),
+        ),
     )
     .map((file: Dirent): string =>
       path.join(path.relative(pathAssetsFolder, file.parentPath), file.name),
