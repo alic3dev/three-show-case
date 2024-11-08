@@ -59,64 +59,64 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
     debugObjects: Record<string, THREE.Object3D>
   }>()
 
-  // const settings = React.useRef<{ visible: CHOObjects<boolean> }>({
-  //   visible: {
-  //     architectural_design_control_districts: true,
-  //     bicycle_lane: true,
-  //     bicycle_rack: true,
-  //     contour_line_2006_2ft: true,
-  //     elementary_school_zone_area: true,
-  //     entrance_corridor_area: true,
-  //     historic_conservation_district_area: true,
-  //     municipal_boundary_area: true,
-  //     parcel_area: true,
-  //     parcel_point: true,
-  //     park_area: true,
-  //     parking_exempt_area: true,
-  //     pedestrian_sidewalk_area: true,
-  //     pedestrian_sidewalk_bridge_area: true,
-  //     pedestrian_walkway_area: true,
-  //     planning_area: true,
-  //     railroad_centerline: true,
-  //     road_area: true,
-  //     road_bridge_area: true,
-  //     road_centerline: true,
-  //     structure_existing_area: true,
-  //     surface_water_course_area: true,
-  //     surface_water_course_line: true,
-  //     trail_line: true,
-  //     vehicle_alley_area: true,
-  //     vehicle_driveway_area: true,
-  //     vehicle_parking_area: true,
-  //     wetland_area: true,
+  const settings = React.useRef<{ visible: CHOObjects<boolean> }>({
+    visible: {
+      architectural_design_control_districts: true,
+      bicycle_lane: true,
+      bicycle_rack: true,
+      contour_line_2006_2ft: true,
+      elementary_school_zone_area: true,
+      entrance_corridor_area: true,
+      historic_conservation_district_area: true,
+      municipal_boundary_area: true,
+      parcel_area: true,
+      parcel_point: true,
+      park_area: true,
+      parking_exempt_area: true,
+      pedestrian_sidewalk_area: true,
+      pedestrian_sidewalk_bridge_area: true,
+      pedestrian_walkway_area: true,
+      planning_area: true,
+      railroad_centerline: true,
+      road_area: true,
+      road_bridge_area: true,
+      road_centerline: true,
+      structure_existing_area: true,
+      surface_water_course_area: true,
+      surface_water_course_line: true,
+      trail_line: true,
+      vehicle_alley_area: true,
+      vehicle_driveway_area: true,
+      vehicle_parking_area: true,
+      wetland_area: true,
 
-  //     // contours: true,
-  //     // lakes: true,
-  //     // parks: true,
-  //     // railroads: true,
-  //     // roads: true,
-  //     // streams: true,
-  //     // structures: true,
-  //     // surfaces: true,
+      // contours: true,
+      // lakes: true,
+      // parks: true,
+      // railroads: true,
+      // roads: true,
+      // streams: true,
+      // structures: true,
+      // surfaces: true,
 
-  //     filteredType: {
-  //       roads: {
-  //         area: true,
-  //         bridge: true,
-  //       },
-  //       // surfaces: {
-  //       //   Alley: true,
-  //       //   Ballast: true,
-  //       //   Bridge: true,
-  //       //   Driveway: true,
-  //       //   Median: true,
-  //       //   Overpass: true,
-  //       //   Parking: true,
-  //       //   Sidewalk: true,
-  //       // },
-  //     },
-  //   },
-  // })
+      filteredType: {
+        roads: {
+          area: true,
+          bridge: true,
+        },
+        // surfaces: {
+        //   Alley: true,
+        //   Ballast: true,
+        //   Bridge: true,
+        //   Driveway: true,
+        //   Median: true,
+        //   Overpass: true,
+        //   Parking: true,
+        //   Sidewalk: true,
+        // },
+      },
+    },
+  })
 
   const player = React.useRef<{ pointerLocked: boolean; body: THREE.Group }>({
     pointerLocked: false,
@@ -482,54 +482,54 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
           assetsCHOLoadableResolve()
         })
 
-      // fetch(resolveAsset('RVA/build/structures.json'))
-      //   .then((res: Response): Promise<string> => res.text())
-      //   .then((text: string): void => {
-      //     const structures: MinifiedStructure[] = JSON.parse(text)
+      fetch(resolveAsset('CHO/build/structure_existing_area.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const structures = JSON.parse(text)
 
-      //     const material = new THREE.LineBasicMaterial({ color: 0xffffff })
+          const material = new THREE.LineBasicMaterial({ color: 0xffffff })
 
-      //     const points: THREE.Vector3[] = []
+          const points: THREE.Vector3[] = []
 
-      //     for (const structure of structures) {
-      //       if (structure.geometry.type === 'Polygon') {
-      //         for (const polygon of structure.geometry.coordinates) {
-      //           for (let i: number = 0; i < polygon.length - 1; i++) {
-      //             points.push(
-      //               new THREE.Vector3(-polygon[i][0], 0, polygon[i][1]),
-      //               new THREE.Vector3(-polygon[i + 1][0], 0, polygon[i + 1][1]),
-      //             )
-      //           }
-      //         }
-      //       } else {
-      //         for (const polygon of structure.geometry.coordinates) {
-      //           for (const subPolygon of polygon) {
-      //             for (let i: number = 0; i < subPolygon.length - 1; i++) {
-      //               points.push(
-      //                 new THREE.Vector3(-subPolygon[i][0], 0, subPolygon[i][1]),
-      //                 new THREE.Vector3(
-      //                   -subPolygon[i + 1][0],
-      //                   0,
-      //                   subPolygon[i + 1][1],
-      //                 ),
-      //               )
-      //             }
-      //           }
-      //         }
-      //       }
-      //     }
+          for (const structure of structures) {
+            if (structure.geometry.type === 'Polygon') {
+              for (const polygon of structure.geometry.coordinates) {
+                for (let i: number = 0; i < polygon.length - 1; i++) {
+                  points.push(
+                    new THREE.Vector3(polygon[i][0], 0, polygon[i][1]),
+                    new THREE.Vector3(polygon[i + 1][0], 0, polygon[i + 1][1]),
+                  )
+                }
+              }
+            } else {
+              for (const polygon of structure.geometry.coordinates) {
+                for (const subPolygon of polygon) {
+                  for (let i: number = 0; i < subPolygon.length - 1; i++) {
+                    points.push(
+                      new THREE.Vector3(subPolygon[i][0], 0, subPolygon[i][1]),
+                      new THREE.Vector3(
+                        subPolygon[i + 1][0],
+                        0,
+                        subPolygon[i + 1][1],
+                      ),
+                    )
+                  }
+                }
+              }
+            }
+          }
 
-      //     const geometry = new THREE.BufferGeometry().setFromPoints(points)
+          const geometry = new THREE.BufferGeometry().setFromPoints(points)
 
-      //     const line = new THREE.LineSegments(geometry, material)
-      //     line.visible = settings.current.visible.structures
+          const line = new THREE.LineSegments(geometry, material)
+          line.visible = settings.current.visible.structure_existing_area
 
-      //     RVA.structures.push(line)
+          CHO.structure_existing_area.push(line)
 
-      //     scene.add(line)
+          scene.add(line)
 
-      //     assetsRVALoadableResolve()
-      //   })
+          assetsCHOLoadableResolve()
+        })
 
       // fetch(resolveAsset('RVA/build/lakes.json'))
       //   .then((res: Response): Promise<string> => res.text())
@@ -612,54 +612,53 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
       //     assetsRVALoadableResolve()
       //   })
 
-      // fetch(resolveAsset('RVA/build/parks.json'))
-      //   .then((res: Response): Promise<string> => res.text())
-      //   .then((text: string): void => {
-      //     const parks: MinifiedPark[] = JSON.parse(text)
+      fetch(resolveAsset('CHO/build/park_area.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const parkArea = JSON.parse(text)
 
-      //     const material = new THREE.LineBasicMaterial({ color: 0x30cc30 })
+          const points: THREE.Vector3[] = []
 
-      //     const points: THREE.Vector3[] = []
+          for (const park of parkArea) {
+            if (park.type === 'Polygon') {
+              for (const polygon of park.coordinates) {
+                for (let i: number = 0; i < polygon.length - 1; i++) {
+                  points.push(
+                    new THREE.Vector3(polygon[i][0], 0, polygon[i][1]),
+                    new THREE.Vector3(polygon[i + 1][0], 0, polygon[i + 1][1]),
+                  )
+                }
+              }
+            } else {
+              for (const polygon of park.coordinates) {
+                for (const subPolygon of polygon) {
+                  for (let i: number = 0; i < subPolygon.length - 1; i++) {
+                    points.push(
+                      new THREE.Vector3(subPolygon[i][0], 0, subPolygon[i][1]),
+                      new THREE.Vector3(
+                        subPolygon[i + 1][0],
+                        0,
+                        subPolygon[i + 1][1],
+                      ),
+                    )
+                  }
+                }
+              }
+            }
+          }
 
-      //     for (const park of parks) {
-      //       if (park.geometry.type === 'Polygon') {
-      //         for (const polygon of park.geometry.coordinates) {
-      //           for (let i: number = 0; i < polygon.length - 1; i++) {
-      //             points.push(
-      //               new THREE.Vector3(-polygon[i][0], 0, polygon[i][1]),
-      //               new THREE.Vector3(-polygon[i + 1][0], 0, polygon[i + 1][1]),
-      //             )
-      //           }
-      //         }
-      //       } else {
-      //         for (const polygon of park.geometry.coordinates) {
-      //           for (const subPolygon of polygon) {
-      //             for (let i: number = 0; i < subPolygon.length - 1; i++) {
-      //               points.push(
-      //                 new THREE.Vector3(-subPolygon[i][0], 0, subPolygon[i][1]),
-      //                 new THREE.Vector3(
-      //                   -subPolygon[i + 1][0],
-      //                   0,
-      //                   subPolygon[i + 1][1],
-      //                 ),
-      //               )
-      //             }
-      //           }
-      //         }
-      //       }
-      //     }
+          const geometry = new THREE.BufferGeometry().setFromPoints(points)
+          const material = new THREE.LineBasicMaterial({ color: 0x30cc30 })
 
-      //     const geometry = new THREE.BufferGeometry().setFromPoints(points)
+          const line = new THREE.LineSegments(geometry, material)
+          line.visible = settings.current.visible.park_area
 
-      //     const line = new THREE.LineSegments(geometry, material)
-      //     line.visible = settings.current.visible.parks
+          CHO.park_area.push(line)
 
-      //     RVA.parks.push(line)
+          scene.add(line)
 
-      //     scene.add(line)
-
-      //     assetsRVALoadableResolve()
-      //   })
+          assetsCHOLoadableResolve()
+        })
 
       fetch(resolveAsset('CHO/build/pedestrian_sidewalk_area.json'))
         .then((res: Response): Promise<string> => res.text())
