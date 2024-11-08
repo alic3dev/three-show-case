@@ -245,7 +245,11 @@ async function processBasic(
   const geometries = []
 
   while (!result.done) {
-    geometries.push(result.value.geometry)
+    if (result.value.geometry) {
+      geometries.push(result.value.geometry)
+    } else {
+      console.error(`Missing geometry: \n\t${result.value}`)
+    }
 
     result = await source.read()
   }
@@ -294,6 +298,33 @@ async function processMunicipalBoundaryArea(): Promise<void> {
   )
 }
 
+async function processStructures(): Promise<void> {
+  const source = await shapefile.open(paths.files.structure_existing_area)
+  let result = await source.read()
+
+  const results = []
+
+  while (!result.done) {
+    if (result.value.geometry) {
+      results.push(result.value)
+    }
+
+    result = await source.read()
+  }
+
+  await fs.writeFile(
+    paths.build.structure_existing_area,
+    JSON.stringify(results),
+    {
+      encoding: 'utf8',
+    },
+  )
+}
+
+async function processParks(): Promise<void> {
+  processBasic(paths.files.park_area, paths.build.park_area)
+}
+
 async function main(): Promise<void> {
   await fs.mkdir(paths.build.directory, { recursive: true })
 
@@ -328,11 +359,11 @@ async function main(): Promise<void> {
   // await processWithLog('Contours', '⛰️ ', processContours)
   await processWithLog('Roads', '🛣️ ', processRoads)
   // await processWithLog('Railroads', '🛤️ ', processRailroads)
-  // await processWithLog('Structures', '🏘️ ', processStructures)
+  await processWithLog('Structures', '🏘️ ', processStructures)
   // await processWithLog('Lakes', '💧', processLakes)
   // await processWithLog('Streams', '💦', processStreams)
   await processWithLog('Boundary', '⭕️', processMunicipalBoundaryArea)
-  // await processWithLog('Parks', '🏞️ ', processParks)
+  await processWithLog('Parks', '🏞️ ', processParks)
   // await processWithLog('Surfaces', '🚗', processSurfaces)
   await processWithLog('Sidewalks', '🚷', processSidewalks)
 }
