@@ -134,44 +134,55 @@ export function Layout({ children }: React.PropsWithChildren): React.ReactNode {
   )
 }
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: (
-      <ErrorBoundary>
-        <WithTitle title="Examples made with Three.js">
-          <Layout>
-            <NavigationApp />
-          </Layout>
-        </WithTitle>
-      </ErrorBoundary>
-    ),
-  },
-  ...apps.map(
-    ({ Component, displayName }: App, index: number): RouteObject => ({
-      path: `/examples/${index + 1}`,
+const router = createBrowserRouter(
+  [
+    {
+      path: '/',
       element: (
         <ErrorBoundary>
-          <WithTitle title={displayName}>
+          <WithTitle title="Examples made with Three.js">
             <Layout>
-              <Component />
+              <NavigationApp />
             </Layout>
           </WithTitle>
         </ErrorBoundary>
       ),
-    }),
-  ),
+    },
+    ...apps.map(
+      ({ Component, displayName }: App, index: number): RouteObject => ({
+        path: `/examples/${index + 1}`,
+        element: (
+          <ErrorBoundary>
+            <WithTitle title={displayName}>
+              <Layout>
+                <Component />
+              </Layout>
+            </WithTitle>
+          </ErrorBoundary>
+        ),
+      }),
+    ),
+    {
+      path: '*',
+      loader: async (): Promise<Response> => {
+        return redirect('/')
+      },
+    },
+  ],
   {
-    path: '*',
-    loader: async (): Promise<Response> => {
-      return redirect('/')
+    future: {
+      v7_fetcherPersist: true,
+      v7_relativeSplatPath: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true,
     },
   },
-])
+)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <RouterProvider router={router} future={{ v7_startTransition: true }} />
     <Analytics />
   </React.StrictMode>,
 )
