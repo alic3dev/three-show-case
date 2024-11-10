@@ -34,7 +34,7 @@ export const GustsApp: AppComponent = (): React.ReactElement => {
   React.useEffect((): (() => void) | void => {
     if (!webGLSupported.current.value || !rendererContainer.current) return
 
-    if (!WebGL.isWebGLAvailable()) {
+    if (!WebGL.isWebGL2Available()) {
       rendererContainer.current.appendChild(WebGL.getWebGLErrorMessage())
 
       webGLSupported.current.value = false
@@ -105,7 +105,7 @@ export const GustsApp: AppComponent = (): React.ReactElement => {
         color: 0xffffff,
       })
 
-      console.log(gustGeo.attributes)
+      // console.log(gustGeo.attributes)
 
       scene.add(new THREE.Mesh(gustGeo, gustMat))
 

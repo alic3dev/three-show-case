@@ -35,7 +35,7 @@ export const BouncingPhysicsApp: AppComponent = (): React.ReactElement => {
   React.useEffect((): (() => void) | void => {
     if (!webGLSupported.current.value || !rendererContainer.current) return
 
-    if (!WebGL.isWebGLAvailable()) {
+    if (!WebGL.isWebGL2Available()) {
       rendererContainer.current.appendChild(WebGL.getWebGLErrorMessage())
 
       webGLSupported.current.value = false
