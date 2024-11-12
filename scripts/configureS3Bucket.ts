@@ -72,6 +72,7 @@ async function main(): Promise<void> {
       (file: Dirent): boolean =>
         file.isFile() &&
         !ignoredFiles.includes(file.name) &&
+        // file.parentPath.includes('CHO/build') &&
         !ignoredDirectories.includes(
           file.parentPath.replace(parentDirectory, ''),
         ),
