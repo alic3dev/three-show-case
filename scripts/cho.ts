@@ -321,6 +321,17 @@ async function processStructures(): Promise<void> {
   )
 }
 
+async function processRailroads(): Promise<void> {
+  processBasic(paths.files.railroad_centerline, paths.build.railroad_centerline)
+}
+
+async function processWater(): Promise<void> {
+  processBasic(
+    paths.files.surface_water_course_area,
+    paths.build.surface_water_course_area,
+  )
+}
+
 async function processParks(): Promise<void> {
   processBasic(paths.files.park_area, paths.build.park_area)
 }
@@ -358,9 +369,9 @@ async function main(): Promise<void> {
 
   // await processWithLog('Contours', '⛰️ ', processContours)
   await processWithLog('Roads', '🛣️ ', processRoads)
-  // await processWithLog('Railroads', '🛤️ ', processRailroads)
+  await processWithLog('Railroads', '🛤️ ', processRailroads)
   await processWithLog('Structures', '🏘️ ', processStructures)
-  // await processWithLog('Lakes', '💧', processLakes)
+  await processWithLog('Water', '💧', processWater)
   // await processWithLog('Streams', '💦', processStreams)
   await processWithLog('Boundary', '⭕️', processMunicipalBoundaryArea)
   await processWithLog('Parks', '🏞️ ', processParks)

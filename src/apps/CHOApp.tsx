@@ -288,21 +288,13 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
       //     }
       //   })
 
-      const assetsCHOLoadableResolve: LoadableResolver = addBatchedLoadable(4)
+      const assetsCHOLoadableResolve: LoadableResolver = addBatchedLoadable(6)
 
       fetch(resolveAsset('CHO/build/municipal_boundary_area.json'))
         .then((res: Response): Promise<string> => res.text())
         .then((text: string): void => {
           const boundary: [number, number][] = JSON.parse(text)
           const boundaryPoints: THREE.Vector3[] = []
-
-          // boundaryLine.visible =
-          //   settings.current.visible.roads &&
-          //   settings.current.visible.filteredType.roads.paved
-
-          // RVA.roads.push(linePaved, lineUnpaved)
-          // RVA.filteredType.roads.paved.push(linePaved)
-          // RVA.filteredType.roads.unpaved.push(lineUnpaved)
 
           let minPoint: THREE.Vector2 | undefined = undefined
           let maxPoint: THREE.Vector2 | undefined = undefined
@@ -531,37 +523,85 @@ export const CHOApp: AppComponent = (): React.ReactElement => {
           assetsCHOLoadableResolve()
         })
 
-      // fetch(resolveAsset('RVA/build/lakes.json'))
-      //   .then((res: Response): Promise<string> => res.text())
-      //   .then((text: string): void => {
-      //     const lakes: MinifiedLake[] = JSON.parse(text)
+      fetch(resolveAsset('CHO/build/surface_water_course_area.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const surfaceWaterCourseArea = JSON.parse(text)
 
-      //     const material = new THREE.LineBasicMaterial({ color: 0x00aacc })
+          const material = new THREE.LineBasicMaterial({ color: 0x00aacc })
 
-      //     const points: THREE.Vector3[] = []
+          const points: THREE.Vector3[] = []
 
-      //     for (const lake of lakes) {
-      //       for (const polygon of lake.geometry.coordinates) {
-      //         for (let i: number = 0; i < polygon.length - 1; i++) {
-      //           points.push(
-      //             new THREE.Vector3(-polygon[i][0], 0, polygon[i][1]),
-      //             new THREE.Vector3(-polygon[i + 1][0], 0, polygon[i + 1][1]),
-      //           )
-      //         }
-      //       }
-      //     }
+          for (const surface of surfaceWaterCourseArea) {
+            for (const polygon of surface.coordinates) {
+              for (let i: number = 0; i < polygon.length - 1; i++) {
+                points.push(
+                  new THREE.Vector3(polygon[i][0], 0, polygon[i][1]),
+                  new THREE.Vector3(polygon[i + 1][0], 0, polygon[i + 1][1]),
+                )
+              }
+            }
+          }
 
-      //     const geometry = new THREE.BufferGeometry().setFromPoints(points)
+          const geometry = new THREE.BufferGeometry().setFromPoints(points)
 
-      //     const line = new THREE.LineSegments(geometry, material)
-      //     line.visible = settings.current.visible.lakes
+          const line = new THREE.LineSegments(geometry, material)
+          line.visible = settings.current.visible.surface_water_course_area
 
-      //     RVA.lakes.push(line)
+          CHO.surface_water_course_area.push(line)
 
-      //     scene.add(line)
+          scene.add(line)
 
-      //     assetsRVALoadableResolve()
-      //   })
+          assetsCHOLoadableResolve()
+        })
+
+      fetch(resolveAsset('CHO/build/railroad_centerline.json'))
+        .then((res: Response): Promise<string> => res.text())
+        .then((text: string): void => {
+          const railroadCenterlines = JSON.parse(text)
+
+          const material = new THREE.LineBasicMaterial({ color: 0xffff00 })
+          const points: THREE.Vector3[] = []
+
+          for (const railroad of railroadCenterlines) {
+            for (let i: number = 0; i < railroad.coordinates.length - 1; i++) {
+              points.push(
+                new THREE.Vector3(
+                  railroad.coordinates[i][0],
+                  0,
+                  railroad.coordinates[i][1],
+                ),
+                new THREE.Vector3(
+                  railroad.coordinates[i + 1][0],
+                  0,
+                  railroad.coordinates[i + 1][1],
+                ),
+              )
+            }
+          }
+
+          // {
+          //   "type":"LineString",
+          //   "coordinates": [
+          //     [11487957.75320828,3900870.958143845],
+          //     [11488017.814208284,3900932.007143855],
+          //     [11488046.089708284,3900967.1453938484],
+          //     [11488066.524958283,3901005.650143847],
+          //     [11488069.595208272,3901016.446643859]
+          //   ]
+          // }
+
+          const geometry = new THREE.BufferGeometry().setFromPoints(points)
+
+          const line = new THREE.LineSegments(geometry, material)
+          line.visible = settings.current.visible.railroad_centerline
+
+          CHO.railroad_centerline.push(line)
+
+          scene.add(line)
+
+          assetsCHOLoadableResolve()
+        })
 
       // fetch(resolveAsset('RVA/build/streams.json'))
       //   .then((res: Response): Promise<string> => res.text())
