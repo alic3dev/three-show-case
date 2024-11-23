@@ -29,6 +29,7 @@ import { WithTitle } from '@/components/WithTitle'
 import { addAmoLoaderToWindow } from '@/utils/ammoCompatHelper'
 import { LOCAL_STORAGE_KEYS } from '@/utils/constants'
 import { addFaceLandmarksDetectionLoaderToWindow } from '@/utils/faceLandmarksCompatHelper'
+import { isMobile } from '@/utils/isMobile'
 import { setAllRequiredPolyfills } from '@/utils/polyfills'
 
 import '@/main.scss'
@@ -65,7 +66,7 @@ export function Layout({ children }: React.PropsWithChildren): React.ReactNode {
       }
     }
 
-    return true
+    return !isMobile()
   })
 
   const toggleDrawer = React.useCallback((): void => {
