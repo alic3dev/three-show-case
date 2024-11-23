@@ -6,7 +6,6 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection'
 
@@ -17,6 +16,7 @@ import { LoadingScreen } from '@/components/LoadingScreen'
 import { useStats } from '@/hooks/useStats'
 
 import { EventsManager } from '@/utils/EventsManager'
+import { GUI } from '@/utils/helpers/gui'
 import * as objectUtils from '@/utils/objects'
 
 import styles from '@/apps/StandardApp.module.scss'

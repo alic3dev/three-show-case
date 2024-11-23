@@ -10,12 +10,13 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
 import { useStats } from '@/hooks/useStats'
+
+import { GUI } from '@/utils/helpers/gui'
 
 import {
   defaultCityOptions,

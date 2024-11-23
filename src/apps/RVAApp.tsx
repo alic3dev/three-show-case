@@ -18,7 +18,7 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
+
 import { RGBELoader } from 'three/addons/loaders/RGBELoader'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
@@ -27,6 +27,7 @@ import { useLoadManager } from '@/hooks/useLoadManager'
 import { useStats } from '@/hooks/useStats'
 
 import { EventsManager } from '@/utils/EventsManager'
+import { GUI } from '@/utils/helpers/gui'
 import * as objectUtils from '@/utils/objects'
 import { resolveAsset } from '@/utils/resolveAsset'
 import * as RVAUtils from '@/utils/RVA'

@@ -6,11 +6,11 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
 import { useStats } from '@/hooks/useStats'
 
 import { EventsManager } from '@/utils/EventsManager'
+import { GUI } from '@/utils/helpers/gui'
 
 import styles from '@/apps/StandardApp.module.scss'
 

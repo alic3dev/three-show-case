@@ -6,12 +6,12 @@ import React from 'react'
 
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 import { useStats } from '@/hooks/useStats'
 
 import { EventsManager } from '@/utils/EventsManager'
+import { GUI } from '@/utils/helpers/gui'
 import { rotateAboutPoint } from '@/utils/rotateAboutPoint'
 
 import styles from '@/apps/StandardAppWithGrab.module.scss'
