@@ -420,7 +420,7 @@ export const RVAApp: AppComponent = (): React.ReactElement => {
 
           const geometry = new THREE.BufferGeometry().setFromPoints(points)
 
-          const line = new THREE.Mesh(geometry, material)
+          const line = new THREE.LineSegments(geometry, material)
           line.visible = settings.current.visible.structures
 
           RVA.structures.push(line)
@@ -566,7 +566,7 @@ export const RVAApp: AppComponent = (): React.ReactElement => {
           const surfaces: MinifiedSurface[] = JSON.parse(text)
 
           const material = new THREE.LineBasicMaterial({
-            color: 0xff0000,
+            color: 0x999999,
             transparent: true,
             opacity: 0.5,
           })
@@ -638,7 +638,7 @@ export const RVAApp: AppComponent = (): React.ReactElement => {
               points[prop as keyof typeof SurfacesFeaturePropertiesSubType],
             )
 
-            const line = new THREE.Mesh(geometry, material)
+            const line = new THREE.LineSegments(geometry, material)
 
             line.visible =
               settings.current.visible.surfaces &&
