@@ -12,7 +12,6 @@ import React from 'react'
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader'
-// import { GLTFLoader } from 'three/addons/loaders/GLTFLoader'
 
 import { LoadingScreen } from '@/components/LoadingScreen'
 
@@ -117,7 +116,7 @@ const generateChunkMethod: GenerateChunkMethod = function generateChunkMethod({
             (): PolyHavenTextureResult => {
               return loadPolyHavenTexture({
                 name: 'cobblestone_floor_04',
-                repeats: 1,
+                repeats: options.CHUNK_SIZE / 8,
               })
             },
           )
@@ -132,7 +131,7 @@ const generateChunkMethod: GenerateChunkMethod = function generateChunkMethod({
     const hallFloorGeometry: THREE.BufferGeometry = cacheManager.getGeometry(
       hallFloorCacheKey,
       (): THREE.BufferGeometry => {
-        return new THREE.BoxGeometry(1, 1, 1)
+        return new THREE.BoxGeometry(options.CHUNK_SIZE, options.CHUNK_SIZE, 1)
       },
     )
 
@@ -142,9 +141,10 @@ const generateChunkMethod: GenerateChunkMethod = function generateChunkMethod({
     )
     hallFloorMesh.position.set(
       hall.x * options.CHUNK_SIZE,
-      0,
+      -options.CHUNK_SIZE / 2.05,
       hall.y * options.CHUNK_SIZE,
     )
+    hallFloorMesh.rotateY(Math.random() > 0.5 ? 90 : 0)
     hallFloorMesh.receiveShadow = true
 
     objects.add(hallFloorMesh)
