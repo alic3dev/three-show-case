@@ -48,4 +48,6 @@ if (!fs.existsSync(scriptPath)) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require(scriptPath)
+

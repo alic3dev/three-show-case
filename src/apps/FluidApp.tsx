@@ -329,7 +329,6 @@ export const FluidApp: AppComponent = (): React.ReactElement => {
           'target',
         )
       ) {
-        // eslint-disable-next-line no-extra-semi
         ;(
           rendererProperties.current?.sunLight as THREE.SpotLight
         ).target.translateZ(-0.2)
