@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
+// eslint-disable-next-line @typescript-eslint/prefer-namespace-keyword
 declare module Ammo {
   interface DbvtBroadphase {}
   interface DbvtBroadphaseConstructor {

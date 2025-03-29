@@ -379,12 +379,10 @@ export class ChunkManager {
 
         for (const object of chunk.objects.children) {
           if (Object.prototype.hasOwnProperty.call(object, 'geometry')) {
-            // eslint-disable-next-line no-extra-semi
             ;(object as THREE.Mesh).geometry.dispose()
           }
 
           if (Object.prototype.hasOwnProperty.call(object, 'dispose')) {
-            // eslint-disable-next-line no-extra-semi
             ;(object as THREE.Light).dispose()
           }
         }

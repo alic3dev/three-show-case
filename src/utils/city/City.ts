@@ -171,7 +171,6 @@ export async function generateCity({
               'dispose',
             )
           ) {
-            // eslint-disable-next-line no-extra-semi
             ;((object as THREE.Mesh).geometry as THREE.BufferGeometry).dispose()
           }
         }
@@ -181,7 +180,6 @@ export async function generateCity({
         }
 
         if (Object.prototype.hasOwnProperty.call(object, 'dispose')) {
-          // eslint-disable-next-line no-extra-semi
           ;(object as THREE.Light).dispose()
         }
       }

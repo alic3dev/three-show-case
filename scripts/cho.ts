@@ -352,7 +352,7 @@ async function main(): Promise<void> {
       } else {
         filePathSet.add(filePath)
       }
-    } catch (e) {
+    } catch {
       console.error(`File doesn't exist [${fileIndex}]: ${filePath}`)
     }
   }

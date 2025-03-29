@@ -212,7 +212,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       scene.add(hemiLight)
 
       const spotLight = new THREE.SpotLight(
-        0xfdc371,
+        0xfd0000,
         100,
         0,
         undefined,
@@ -230,31 +230,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       scene.add(spotLight)
       scene.add(spotLight.target)
 
-      // camera.add(spotLight) //, spotLight.target)
-
-      // const dirLight = new THREE.DirectionalLight(0xfdc371, 100)
-      // dirLight.position.set(0, 7, -100)
-      // dirLight.target.position.set(0, 0, 100)
-
-      // dirLight.castShadow = true
-      // dirLight.shadow.mapSize.width = 8192 / 8
-      // dirLight.shadow.mapSize.height = dirLight.shadow.mapSize.width
-      // dirLight.shadow.radius = 2
-      // dirLight.shadow.camera.left = -1000
-      // dirLight.shadow.camera.right = 1000
-      // dirLight.shadow.camera.top = 1000
-      // dirLight.shadow.camera.bottom = -1000
-
-      // camera.add(dirLight)
-
-      // scene.add(dirLight)
-      // scene.add(dirLight.target)
-
-      // const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 5)
-      // scene.add(dirLightHelper)
-
-      // camera.add(dirLightHelper)
-
       const sunLight = spotLight
 
       const sky: Sky = new Sky()
@@ -262,7 +237,7 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
 
       const sunPosition = new THREE.Vector3().setFromSphericalCoords(
         1,
-        THREE.MathUtils.degToRad(90),
+        THREE.MathUtils.degToRad(91),
         THREE.MathUtils.degToRad(180),
       )
       sky.material.uniforms.sunPosition.value = sunPosition
@@ -283,8 +258,8 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
           },
         ),
         sunDirection: new THREE.Vector3(0, 1, -20),
-        sunColor: 0xfdc371,
-        waterColor: 0x001e0f,
+        sunColor: 0xfd0000,
+        waterColor: 0x1e0320,
         distortionScale: 2,
         fog: scene.fog !== undefined,
       })
@@ -293,9 +268,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
 
       water.rotation.x = -Math.PI / 2
       water.position.setY(0.6)
-
-      // water.receiveShadow = true
-      // water.castShadow = true
 
       scene.add(water)
 
@@ -419,16 +391,8 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
     const animate: XRFrameRequestCallback = (): void => {
       statsRef.current.stats.update()
 
-      // rendererProperties.current?.camera.position.setX(
-      //   rendererProperties.current?.camera.position.x - 4,
-      // )
-
       rendererProperties.current!.water.material.uniforms['time'].value +=
         1.0 / 60.0 / 2
-
-      // rendererProperties.current?.camera.position.setX(
-      //   rendererProperties.current?.camera.position.x + 0.05,
-      // )
 
       rendererProperties.current?.camera.translateZ(-0.2)
       rendererProperties.current?.sunLight.translateZ(-0.2)
@@ -439,7 +403,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
           'target',
         )
       ) {
-        // eslint-disable-next-line no-extra-semi
         ;(
           rendererProperties.current?.sunLight as THREE.SpotLight
         ).target.translateZ(-0.2)
@@ -464,15 +427,6 @@ export const OceanApp: AppComponent = (): React.ReactElement => {
       .name('distortionScale')
     folderWater.add(waterUniforms.size, 'value', 0.1, 10, 0.1).name('size')
     folderWater.open()
-
-    // const speedFolder: GUI = panel.addFolder('Lights')
-    // speedFolder
-    //   .add(settings.current.lights, 'intensity', 0, 100, 0.1)
-    //   .onChange((value: number): void => {
-    //     for (const light of rendererProperties.current!.lights) {
-    //       light.intensity = value
-    //     }
-    //   })
 
     return (): void => {
       panel.destroy()
